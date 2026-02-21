@@ -1,0 +1,119 @@
+package com.revisaai.auth;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.revisaai.auth.dto.AuthResponse;
+import com.revisaai.auth.dto.LoginRequest;
+import com.revisaai.auth.dto.RegisterRequest;
+import com.revisaai.shared.exception.InvalidCredentialsException;
+import com.revisaai.shared.exception.UserAlreadyExistsException;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
+import org.springframework.boot.autoconfigure.security.servlet.SecurityFilterAutoConfiguration;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.test.web.servlet.MockMvc;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.willThrow;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
+@WebMvcTest(
+        value = AuthController.class,
+        excludeAutoConfiguration = {SecurityAutoConfiguration.class, SecurityFilterAutoConfiguration.class}
+)
+@DisplayName("AuthController")
+class AuthControllerTest {
+
+    @Autowired MockMvc mockMvc;
+    @Autowired ObjectMapper objectMapper;
+    @MockBean AuthService authService;
+
+    @Test
+    @DisplayName("POST /auth/register com body válido deve retornar 201")
+    void register_withValidBody_returns201() throws Exception {
+        var request = new RegisterRequest("Ana", "ana@test.com", "senha123");
+        var authResponse = new AuthResponse("tok.en.here", 900_000L);
+
+        given(authService.register(any(), any())).willReturn(authResponse);
+
+        mockMvc.perform(post("/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.accessToken").value("tok.en.here"))
+                .andExpect(jsonPath("$.tokenType").value("Bearer"));
+    }
+
+    @Test
+    @DisplayName("POST /auth/register com e-mail inválido deve retornar 400")
+    void register_withInvalidEmail_returns400() throws Exception {
+        var request = new RegisterRequest("Ana", "not-an-email", "senha123");
+
+        mockMvc.perform(post("/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors.email").exists());
+    }
+
+    @Test
+    @DisplayName("POST /auth/register com senha curta deve retornar 400")
+    void register_withShortPassword_returns400() throws Exception {
+        var request = new RegisterRequest("Ana", "ana@test.com", "123");
+
+        mockMvc.perform(post("/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors.password").exists());
+    }
+
+    @Test
+    @DisplayName("POST /auth/register com e-mail duplicado deve retornar 409")
+    void register_withDuplicateEmail_returns409() throws Exception {
+        var request = new RegisterRequest("Ana", "ana@test.com", "senha123");
+        given(authService.register(any(), any()))
+                .willThrow(new UserAlreadyExistsException("ana@test.com"));
+
+        mockMvc.perform(post("/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").exists());
+    }
+
+    @Test
+    @DisplayName("POST /auth/login com credenciais válidas deve retornar 200")
+    void login_withValidCredentials_returns200() throws Exception {
+        var request = new LoginRequest("ana@test.com", "senha123");
+        var authResponse = new AuthResponse("tok.en.here", 900_000L);
+
+        given(authService.login(any(), any())).willReturn(authResponse);
+
+        mockMvc.perform(post("/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.accessToken").value("tok.en.here"));
+    }
+
+    @Test
+    @DisplayName("POST /auth/login com credenciais inválidas deve retornar 401")
+    void login_withInvalidCredentials_returns401() throws Exception {
+        var request = new LoginRequest("ana@test.com", "errada");
+        given(authService.login(any(), any()))
+                .willThrow(new InvalidCredentialsException());
+
+        mockMvc.perform(post("/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.message").exists());
+    }
+}
