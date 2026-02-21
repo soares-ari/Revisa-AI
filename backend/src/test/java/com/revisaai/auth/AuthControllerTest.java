@@ -6,32 +6,35 @@ import com.revisaai.auth.dto.LoginRequest;
 import com.revisaai.auth.dto.RegisterRequest;
 import com.revisaai.shared.exception.InvalidCredentialsException;
 import com.revisaai.shared.exception.UserAlreadyExistsException;
+import com.revisaai.shared.security.JwtService;
+import com.revisaai.shared.security.SecurityConfig;
+import com.revisaai.shared.security.UserDetailsServiceImpl;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
-import org.springframework.boot.autoconfigure.security.servlet.SecurityFilterAutoConfiguration;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
-import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.BDDMockito.willThrow;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(
-        value = AuthController.class,
-        excludeAutoConfiguration = {SecurityAutoConfiguration.class, SecurityFilterAutoConfiguration.class}
-)
+// @Import traz SecurityConfig: CSRF off, auth endpoints em permitAll()
+// @MockBean para deps de SecurityConfig e JwtAuthenticationFilter
+@WebMvcTest(AuthController.class)
+@Import(SecurityConfig.class)
 @DisplayName("AuthController")
 class AuthControllerTest {
 
     @Autowired MockMvc mockMvc;
     @Autowired ObjectMapper objectMapper;
+
+    @MockBean JwtService jwtService;
+    @MockBean UserDetailsServiceImpl userDetailsService;
     @MockBean AuthService authService;
 
     @Test

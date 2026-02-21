@@ -9,10 +9,10 @@ import com.revisaai.shared.security.JwtService;
 import com.revisaai.user.AuthProvider;
 import com.revisaai.user.User;
 import com.revisaai.user.UserRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockHttpServletResponse;
@@ -36,8 +36,17 @@ class AuthServiceTest {
     @Mock private JwtService jwtService;
     @Mock private PasswordEncoder passwordEncoder;
 
-    @InjectMocks
+    // Instanciado manualmente: construtor tem @Value que @InjectMocks não injeta
     private AuthService authService;
+
+    @BeforeEach
+    void setUp() {
+        authService = new AuthService(
+                userRepository, refreshTokenRepository, jwtService, passwordEncoder,
+                604_800_000L, // refreshTokenExpirationMs
+                false          // cookieSecure
+        );
+    }
 
     @Test
     @DisplayName("register com e-mail novo deve salvar usuário e retornar token")
