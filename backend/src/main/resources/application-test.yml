@@ -1,5 +1,8 @@
 # Perfil de teste — MongoDB URI sobrescrita pelo @DynamicPropertySource (Testcontainers)
 spring:
+  data:
+    mongodb:
+      auto-index-creation: true
   security:
     oauth2:
       client:
