@@ -25,6 +25,8 @@ public class User {
 
     private String providerId;
 
+    private String pictureUrl;
+
     @CreatedDate
     private Instant createdAt;
 
@@ -46,8 +48,11 @@ public class User {
     public String getName() { return name; }
     public AuthProvider getProvider() { return provider; }
     public String getProviderId() { return providerId; }
+    public String getPictureUrl() { return pictureUrl; }
     public Instant getCreatedAt() { return createdAt; }
     public Instant getUpdatedAt() { return updatedAt; }
 
     public void setProviderId(String providerId) { this.providerId = providerId; }
+    public void setName(String name) { this.name = name; }
+    public void setPictureUrl(String pictureUrl) { this.pictureUrl = pictureUrl; }
 }
