@@ -3,6 +3,8 @@ package com.revisaai.auth;
 import com.revisaai.auth.dto.AuthResponse;
 import com.revisaai.auth.dto.LoginRequest;
 import com.revisaai.auth.dto.RegisterRequest;
+import com.revisaai.auth.oauth2.AuthCode;
+import com.revisaai.auth.oauth2.AuthCodeRepository;
 import com.revisaai.shared.exception.InvalidCredentialsException;
 import com.revisaai.shared.exception.UserAlreadyExistsException;
 import com.revisaai.shared.security.JwtService;
@@ -32,6 +34,7 @@ public class AuthService {
 
     private final UserRepository userRepository;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final AuthCodeRepository authCodeRepository;
     private final JwtService jwtService;
     private final PasswordEncoder passwordEncoder;
     private final long refreshTokenExpirationMs;
@@ -40,12 +43,14 @@ public class AuthService {
     public AuthService(
             UserRepository userRepository,
             RefreshTokenRepository refreshTokenRepository,
+            AuthCodeRepository authCodeRepository,
             JwtService jwtService,
             PasswordEncoder passwordEncoder,
             @Value("${app.refresh-token.expiration}") long refreshTokenExpirationMs,
             @Value("${app.cookie.secure:false}") boolean cookieSecure) {
         this.userRepository = userRepository;
         this.refreshTokenRepository = refreshTokenRepository;
+        this.authCodeRepository = authCodeRepository;
         this.jwtService = jwtService;
         this.passwordEncoder = passwordEncoder;
         this.refreshTokenExpirationMs = refreshTokenExpirationMs;
@@ -108,6 +113,25 @@ public class AuthService {
         return issueTokens(user, response);
     }
 
+    public AuthResponse exchangeOAuth2Code(String code, HttpServletResponse response) {
+        AuthCode authCode = authCodeRepository.findByCode(code)
+                .orElseThrow(InvalidCredentialsException::new);
+
+        if (authCode.isExpired()) {
+            authCodeRepository.deleteByCode(code);
+            log.warn("Auth code expirado para userId={}", authCode.getUserId());
+            throw new InvalidCredentialsException();
+        }
+
+        User user = userRepository.findById(authCode.getUserId())
+                .orElseThrow(InvalidCredentialsException::new);
+
+        authCodeRepository.deleteByCode(code);
+        log.info("Auth code trocado por JWT para userId={}", user.getId());
+
+        return issueTokens(user, response);
+    }
+
     private AuthResponse issueTokens(User user, HttpServletResponse response) {
         String accessToken = jwtService.generateAccessToken(user.getId(), user.getEmail());
 
@@ -130,7 +154,7 @@ public class AuthService {
                 .secure(cookieSecure)
                 .path("/auth/refresh")
                 .maxAge(Duration.ofMillis(refreshTokenExpirationMs))
-                .sameSite("Strict")
+                .sameSite("Lax")
                 .build();
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
     }

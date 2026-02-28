@@ -18,6 +18,8 @@ app:
     expiration: 604800000
   cookie:
     secure: false
+  oauth2:
+    authorized-redirect-uri: http://localhost:5173/oauth2/callback
 
 logging:
   level:

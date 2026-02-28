@@ -1,6 +1,7 @@
 package com.revisaai.auth;
 
 import com.revisaai.auth.dto.AuthResponse;
+import com.revisaai.auth.dto.ExchangeRequest;
 import com.revisaai.auth.dto.LoginRequest;
 import com.revisaai.auth.dto.RegisterRequest;
 import jakarta.servlet.http.HttpServletRequest;
@@ -43,5 +44,12 @@ public class AuthController {
             HttpServletRequest request,
             HttpServletResponse response) {
         return ResponseEntity.ok(authService.refresh(request, response));
+    }
+
+    @PostMapping("/oauth2/exchange")
+    public ResponseEntity<AuthResponse> exchange(
+            @Valid @RequestBody ExchangeRequest request,
+            HttpServletResponse response) {
+        return ResponseEntity.ok(authService.exchangeOAuth2Code(request.code(), response));
     }
 }

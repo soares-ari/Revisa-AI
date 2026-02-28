@@ -26,6 +26,8 @@ app:
     expiration: ${REFRESH_TOKEN_EXPIRATION:604800000}
   cookie:
     secure: ${COOKIE_SECURE:false}
+  oauth2:
+    authorized-redirect-uri: ${OAUTH2_REDIRECT_URI:http://localhost:5173/oauth2/callback}
 
 logging:
   level:
