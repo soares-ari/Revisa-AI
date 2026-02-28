@@ -10,6 +10,11 @@ spring:
       uri: ${MONGODB_URI:mongodb://localhost:27017/revisaai}
       auto-index-creation: true
 
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 20MB
+
   security:
     oauth2:
       client:

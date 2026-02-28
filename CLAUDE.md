@@ -106,9 +106,32 @@ Registro email/senha, login, Google OAuth2, emissão e validação de JWT,
 refresh token. Entidade: User.
 
 ### ingestion
-Pipeline de processamento de PDFs de provas oficiais. Usa Apache PDFBox para
-extração de texto e Claude Haiku 4.5 (Batch API) para parsear questões em JSON
-estruturado. Jobs rastreados em ingestion_jobs. Roda assíncrono via @Async.
+Pipeline de processamento de PDFs de provas oficiais em duas etapas:
+
+**Etapa 1 (implementada):** Endpoint `POST /ingestion/jobs` (JWT obrigatório) recebe
+dois documentos — prova e gabarito — cada um como arquivo PDF via multipart ou URL
+pública. Faz download via WebClient quando necessário, extrai texto bruto com Apache
+PDFBox 3.x e persiste `IngestionJob` com `status=COMPLETED` (ou `FAILED` se houver erro).
+
+**Etapa 2 (futura):** Integração com Claude Haiku 4.5 (Batch API) para parsear o texto
+extraído em questões JSON estruturadas. Adicionará @Async e a transição PROCESSING.
+
+**Entidade IngestionJob:**
+- id, banca (enum Banca), ano? (Integer), cargo? (String)
+- textProva, textGabarito — textos brutos extraídos dos PDFs
+- status: PENDING → COMPLETED | FAILED (PROCESSING reservado para etapa 2)
+- errorMessage? — mensagem de erro quando status=FAILED
+- createdAt (@CreatedDate), updatedAt (@LastModifiedDate)
+
+**Requisição `POST /ingestion/jobs` (multipart/form-data):**
+- `banca` (obrigatório), `ano` (opcional), `cargo` (opcional)
+- Para prova: `provaArquivo` (MultipartFile) **ou** `provaUrl` (String) — ao menos um
+- Para gabarito: `gabaritoArquivo` (MultipartFile) **ou** `gabaritoUrl` (String) — ao menos um
+
+**Dependências:** `org.apache.pdfbox:pdfbox:3.0.3` · `spring-boot-starter-webflux`
+(WebClient — servidor HTTP permanece Tomcat)
+
+**Configuração:** `spring.servlet.multipart.max-file-size=20MB` e `max-request-size=20MB`
 
 ### question
 CRUD e consulta de questões com filtros por banca, área, ano e dificuldade.
@@ -170,6 +193,8 @@ GET    /oauth2/callback/google         ← gerenciado pelo Spring Security
 
 GET    /questions?banca=&area=&ano=
 GET    /questions/:id
+
+POST   /ingestion/jobs                 ← multipart/form-data, JWT obrigatório
 
 POST   /study/sessions
 GET    /study/sessions/:id
