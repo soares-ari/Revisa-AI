@@ -55,6 +55,21 @@ public class GlobalExceptionHandler {
                 .body(new ApiError(401, "Token inválido ou expirado"));
     }
 
+    @ExceptionHandler(QuestionNotFoundException.class)
+    public ResponseEntity<ApiError> handleQuestionNotFound(QuestionNotFoundException ex) {
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(new ApiError(404, ex.getMessage()));
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ApiError> handleIllegalArgument(IllegalArgumentException ex) {
+        log.warn("Argumento inválido: {}", ex.getMessage());
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(new ApiError(400, ex.getMessage()));
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiError> handleGeneric(Exception ex) {
         log.error("Erro interno não tratado", ex);
