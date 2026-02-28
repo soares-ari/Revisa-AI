@@ -3,6 +3,7 @@ package com.revisaai.auth;
 import com.revisaai.auth.dto.AuthResponse;
 import com.revisaai.auth.dto.LoginRequest;
 import com.revisaai.auth.dto.RegisterRequest;
+import com.revisaai.auth.oauth2.AuthCodeRepository;
 import com.revisaai.shared.exception.InvalidCredentialsException;
 import com.revisaai.shared.exception.UserAlreadyExistsException;
 import com.revisaai.shared.security.JwtService;
@@ -33,6 +34,7 @@ class AuthServiceTest {
 
     @Mock private UserRepository userRepository;
     @Mock private RefreshTokenRepository refreshTokenRepository;
+    @Mock private AuthCodeRepository authCodeRepository;
     @Mock private JwtService jwtService;
     @Mock private PasswordEncoder passwordEncoder;
 
@@ -42,7 +44,8 @@ class AuthServiceTest {
     @BeforeEach
     void setUp() {
         authService = new AuthService(
-                userRepository, refreshTokenRepository, jwtService, passwordEncoder,
+                userRepository, refreshTokenRepository, authCodeRepository,
+                jwtService, passwordEncoder,
                 604_800_000L, // refreshTokenExpirationMs
                 false          // cookieSecure
         );
