@@ -2,15 +2,16 @@ package com.revisaai.ingestion;
 
 import com.revisaai.auth.dto.LoginRequest;
 import com.revisaai.auth.dto.RegisterRequest;
+import com.revisaai.question.QuestionRepository;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.*;
-import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -23,6 +24,8 @@ import java.io.IOException;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Testcontainers
@@ -40,11 +43,17 @@ class IngestionIntegrationTest {
                 () -> mongoDBContainer.getConnectionString() + "/revisaai_test");
     }
 
+    @MockBean
+    private QuestionParserService questionParserService;
+
     @Autowired
     private TestRestTemplate restTemplate;
 
     @Autowired
     private IngestionJobRepository ingestionJobRepository;
+
+    @Autowired
+    private QuestionRepository questionRepository;
 
     private String jwtToken;
 
@@ -72,6 +81,10 @@ class IngestionIntegrationTest {
     @BeforeEach
     void setUp() {
         ingestionJobRepository.deleteAll();
+        questionRepository.deleteAll();
+
+        given(questionParserService.parse(any(), any(), any(), any(), any()))
+                .willReturn(new ParseResult(2, 0));
 
         var register = new RegisterRequest("Admin", "admin@test.com", "senha123");
         restTemplate.postForEntity("/auth/register", register, Map.class);
@@ -176,5 +189,31 @@ class IngestionIntegrationTest {
                 HttpMethod.POST, new HttpEntity<>(body, headers), Map.class);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @DisplayName("POST /ingestion/jobs com arquivos retorna 201 com questoesSalvas e questoesInvalidas")
+    void post_comArquivos_retornaFieldsQuestoesSalvas() {
+        var headers = new HttpHeaders();
+        headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+        headers.setBearerAuth(jwtToken);
+
+        var body = new LinkedMultiValueMap<String, Object>();
+        body.add("banca", "CEBRASPE");
+        body.add("provaArquivo", new ByteArrayResource(MINIMAL_PDF) {
+            @Override public String getFilename() { return "prova.pdf"; }
+        });
+        body.add("gabaritoArquivo", new ByteArrayResource(MINIMAL_PDF) {
+            @Override public String getFilename() { return "gabarito.pdf"; }
+        });
+
+        var response = restTemplate.exchange("/ingestion/jobs",
+                HttpMethod.POST, new HttpEntity<>(body, headers), Map.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        assertThat(response.getBody()).containsKey("questoesSalvas");
+        assertThat(response.getBody()).containsKey("questoesInvalidas");
+        assertThat(response.getBody().get("questoesSalvas")).isEqualTo(2);
+        assertThat(response.getBody().get("questoesInvalidas")).isEqualTo(0);
     }
 }

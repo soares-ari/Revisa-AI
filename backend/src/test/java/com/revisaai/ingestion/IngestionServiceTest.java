@@ -14,6 +14,7 @@ import java.io.IOException;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
 
@@ -29,13 +30,18 @@ class IngestionServiceTest {
     @Mock
     private PdfTextExtractor extractor;
 
+    @Mock
+    private QuestionParserService questionParserService;
+
     private IngestionService service;
 
     private static final byte[] PDF_BYTES = new byte[]{0x25, 0x50, 0x44, 0x46}; // %PDF header
 
     @BeforeEach
     void setUp() {
-        service = new IngestionService(repository, downloader, extractor);
+        service = new IngestionService(repository, downloader, extractor, questionParserService);
+        lenient().when(questionParserService.parse(any(), any(), any(), any(), any()))
+                .thenReturn(new ParseResult(0, 0));
     }
 
     @Test
@@ -149,5 +155,49 @@ class IngestionServiceTest {
         assertThat(job.getStatus()).isEqualTo(IngestionStatus.FAILED);
         assertThat(job.getErrorMessage()).contains("PDF corrompido");
         assertThat(job.getTextProva()).isNull();
+    }
+
+    @Test
+    @DisplayName("process após extração bem-sucedida chama QuestionParserService com os textos")
+    void process_comExtracaoBemSucedida_chamaQuestionParser() throws IOException {
+        var provaFile = new MockMultipartFile("provaArquivo", "prova.pdf",
+                "application/pdf", PDF_BYTES);
+        var gabaritoFile = new MockMultipartFile("gabaritoArquivo", "gabarito.pdf",
+                "application/pdf", PDF_BYTES);
+
+        given(repository.save(any())).willAnswer(inv -> inv.getArgument(0));
+        given(extractor.extract(PDF_BYTES)).willReturn("texto prova").willReturn("texto gabarito");
+        given(questionParserService.parse(any(), any(), any(), any(), any()))
+                .willReturn(new ParseResult(3, 1));
+
+        var job = service.process("CEBRASPE", 2024, "Analista",
+                provaFile, null, gabaritoFile, null);
+
+        assertThat(job.getStatus()).isEqualTo(IngestionStatus.COMPLETED);
+        assertThat(job.getQuestoesSalvas()).isEqualTo(3);
+        assertThat(job.getQuestoesInvalidas()).isEqualTo(1);
+        verify(questionParserService).parse(
+                eq("texto prova"), eq("texto gabarito"),
+                eq(Banca.CEBRASPE), eq(2024), eq("Analista"));
+    }
+
+    @Test
+    @DisplayName("process quando QuestionParser lança exceção retorna job FAILED")
+    void process_questionParserLancaException_retornaJobFailed() throws IOException {
+        var provaFile = new MockMultipartFile("provaArquivo", "prova.pdf",
+                "application/pdf", PDF_BYTES);
+        var gabaritoFile = new MockMultipartFile("gabaritoArquivo", "gabarito.pdf",
+                "application/pdf", PDF_BYTES);
+
+        given(repository.save(any())).willAnswer(inv -> inv.getArgument(0));
+        given(extractor.extract(PDF_BYTES)).willReturn("texto");
+        given(questionParserService.parse(any(), any(), any(), any(), any()))
+                .willThrow(new RuntimeException("Falha na API Anthropic"));
+
+        var job = service.process("FGV", null, null,
+                provaFile, null, gabaritoFile, null);
+
+        assertThat(job.getStatus()).isEqualTo(IngestionStatus.FAILED);
+        assertThat(job.getErrorMessage()).contains("Falha na API Anthropic");
     }
 }
