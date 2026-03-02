@@ -113,15 +113,32 @@ dois documentos — prova e gabarito — cada um como arquivo PDF via multipart 
 pública. Faz download via WebClient quando necessário, extrai texto bruto com Apache
 PDFBox 3.x e persiste `IngestionJob` com `status=COMPLETED` (ou `FAILED` se houver erro).
 
-**Etapa 2 (futura):** Integração com Claude Haiku 4.5 (Batch API) para parsear o texto
-extraído em questões JSON estruturadas. Adicionará @Async e a transição PROCESSING.
+**Etapa 2 (implementada):** Após a extração de texto, o `IngestionService` chama a API
+da Anthropic (Claude Haiku 4.5, modelo `claude-haiku-4-5-20251001`) com uma única
+requisição síncrona enviando `textProva` e `textGabarito`. Claude retorna um array JSON
+de questões; o `QuestionParserService` parseia e persiste cada questão. Pipeline
+síncrono — ocorre na mesma requisição do upload, sem @Async nesta fase.
+
+**Validação de questões:** gabarito fora das alternativas ou dificuldade desconhecida →
+persistidas com `valid=false` e `validationError` descritivo. O job ainda termina
+COMPLETED; `questoesInvalidas` reflete o total no body da resposta.
 
 **Entidade IngestionJob:**
 - id, banca (enum Banca), ano? (Integer), cargo? (String)
 - textProva, textGabarito — textos brutos extraídos dos PDFs
-- status: PENDING → COMPLETED | FAILED (PROCESSING reservado para etapa 2)
+- status: PENDING → COMPLETED | FAILED
 - errorMessage? — mensagem de erro quando status=FAILED
+- questoesSalvas (int) — questões válidas persistidas na coleção `questions`
+- questoesInvalidas (int) — questões com `valid=false` (gabarito/dificuldade inválidos)
 - createdAt (@CreatedDate), updatedAt (@LastModifiedDate)
+
+**Entidade Question — campos adicionados:**
+- `boolean valid` (default `true`) — `false` quando gabarito ou dificuldade inválidos
+- `String validationError` (opcional) — descreve o motivo da invalidação
+
+**Novos componentes:**
+- `QuestionParserService` — @Service; chama Anthropic, parseia JSON, salva Questions
+- `AnthropicConfig` — @Configuration; @Bean `AnthropicClient` com timeout de 120s
 
 **Requisição `POST /ingestion/jobs` (multipart/form-data):**
 - `banca` (obrigatório), `ano` (opcional), `cargo` (opcional)
@@ -129,7 +146,7 @@ extraído em questões JSON estruturadas. Adicionará @Async e a transição PRO
 - Para gabarito: `gabaritoArquivo` (MultipartFile) **ou** `gabaritoUrl` (String) — ao menos um
 
 **Dependências:** `org.apache.pdfbox:pdfbox:3.0.3` · `spring-boot-starter-webflux`
-(WebClient — servidor HTTP permanece Tomcat)
+(WebClient) · `com.anthropic:anthropic-java:2.15.0`
 
 **Configuração:** `spring.servlet.multipart.max-file-size=20MB` e `max-request-size=20MB`
 

@@ -24,6 +24,9 @@ public class IngestionJob {
     private IngestionStatus status;
     private String errorMessage;
 
+    private int questoesSalvas;
+    private int questoesInvalidas;
+
     @CreatedDate
     private Instant createdAt;
 
@@ -50,8 +53,13 @@ public class IngestionJob {
     public Instant getCreatedAt() { return createdAt; }
     public Instant getUpdatedAt() { return updatedAt; }
 
+    public int getQuestoesSalvas() { return questoesSalvas; }
+    public int getQuestoesInvalidas() { return questoesInvalidas; }
+
     public void setStatus(IngestionStatus status) { this.status = status; }
     public void setTextProva(String textProva) { this.textProva = textProva; }
     public void setTextGabarito(String textGabarito) { this.textGabarito = textGabarito; }
     public void setErrorMessage(String errorMessage) { this.errorMessage = errorMessage; }
+    public void setQuestoesSalvas(int questoesSalvas) { this.questoesSalvas = questoesSalvas; }
+    public void setQuestoesInvalidas(int questoesInvalidas) { this.questoesInvalidas = questoesInvalidas; }
 }

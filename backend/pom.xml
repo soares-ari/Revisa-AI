@@ -105,6 +105,13 @@
             <scope>test</scope>
         </dependency>
 
+        <!-- Anthropic Java SDK — integração com Claude Haiku -->
+        <dependency>
+            <groupId>com.anthropic</groupId>
+            <artifactId>anthropic-java</artifactId>
+            <version>2.15.0</version>
+        </dependency>
+
         <!-- Apache PDFBox — extração de texto de PDFs -->
         <dependency>
             <groupId>org.apache.pdfbox</groupId>

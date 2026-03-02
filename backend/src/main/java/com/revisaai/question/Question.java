@@ -29,6 +29,9 @@ public class Question {
 
     private Dificuldade dificuldade;
 
+    private boolean valid = true;
+    private String validationError;
+
     @CreatedDate
     private Instant createdAt;
 
@@ -51,6 +54,24 @@ public class Question {
         this.dificuldade = dificuldade;
     }
 
+    public static Question createInvalid(String enunciado, List<String> alternativas,
+                                          String gabarito, Banca banca, Integer ano,
+                                          String cargo, String area, Dificuldade dificuldade,
+                                          String validationError) {
+        var q = new Question();
+        q.enunciado = enunciado;
+        q.alternativas = alternativas;
+        q.gabarito = gabarito;
+        q.banca = banca;
+        q.ano = ano;
+        q.cargo = cargo;
+        q.area = area;
+        q.dificuldade = dificuldade;
+        q.valid = false;
+        q.validationError = validationError;
+        return q;
+    }
+
     public String getId() { return id; }
     public String getEnunciado() { return enunciado; }
     public List<String> getAlternativas() { return alternativas; }
@@ -60,5 +81,7 @@ public class Question {
     public String getCargo() { return cargo; }
     public String getArea() { return area; }
     public Dificuldade getDificuldade() { return dificuldade; }
+    public boolean isValid() { return valid; }
+    public String getValidationError() { return validationError; }
     public Instant getCreatedAt() { return createdAt; }
 }
