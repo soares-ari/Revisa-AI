@@ -198,8 +198,34 @@ calcula o resultado geral e o desempenho por área.
 **DTOs:** `CreateSessionRequest`, `AnswerRequest`, `AnswerResponse`
 
 ### explanation
-Gera explicações via Claude Haiku 4.5 sob demanda. Cache em MongoDB para não
-reprocessar a mesma questão. Entidade: Explanation.
+Gera explicações para questões via Claude Haiku 4.5 sob demanda. A explicação é
+gerada uma única vez e cacheada na coleção `explanations` do MongoDB — chamadas
+subsequentes para o mesmo `questionId` retornam o cache sem chamar a Anthropic.
+
+**Entidade Explanation** (`explanations`):
+- id, questionId (String, @Indexed unique), texto (String — explicação gerada)
+- createdAt (@CreatedDate)
+
+**Endpoint** (JWT obrigatório):
+- `GET /explanations/:questionId` — retorna a explicação da questão. Se já existir
+  no cache, retorna diretamente. Se não existir, busca a `Question` pelo questionId
+  (404 se não encontrada), gera a explicação via Claude Haiku 4.5 e persiste antes
+  de retornar. Retorna 200 com a `Explanation`.
+
+O prompt enviado ao Claude inclui o enunciado, as alternativas e o gabarito da
+questão. Solicita: justificativa geral da questão, explicação de por que o gabarito
+está correto, e explicação de por que cada alternativa incorreta está errada.
+Resposta em texto corrido, em português, sem markdown.
+
+**Componentes:**
+- `ExplanationService` — @Service; verifica cache, chama Anthropic se necessário,
+  persiste e retorna. Reutiliza bean `AnthropicClient` de `ingestion/AnthropicConfig`.
+- `ExplanationRepository` — extends MongoRepository; método `findByQuestionId(String)`
+  retornando `Optional<Explanation>`
+- `ExplanationController` — @RestController com `GET /explanations/:questionId`
+
+**Tratamento de erros:** `QuestionNotFoundException` já existe — reutilizada para 404.
+Se a chamada à Anthropic falhar, a exceção propaga (falhas não são cacheadas).
 
 ### user
 Perfil, preferências e histórico agregado de desempenho. Entidade: UserProfile.
