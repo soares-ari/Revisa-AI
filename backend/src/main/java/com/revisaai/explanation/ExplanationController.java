@@ -18,6 +18,6 @@ public class ExplanationController {
     public ResponseEntity<Explanation> getExplanation(
             @PathVariable String questionId,
             Authentication authentication) {
-        throw new UnsupportedOperationException("Not implemented yet");
+        return ResponseEntity.ok(explanationService.getExplanation(questionId));
     }
 }
