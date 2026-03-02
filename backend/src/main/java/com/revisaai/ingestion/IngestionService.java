@@ -14,13 +14,16 @@ public class IngestionService {
     private final IngestionJobRepository repository;
     private final DocumentDownloader downloader;
     private final PdfTextExtractor extractor;
+    private final QuestionParserService questionParserService;
 
     public IngestionService(IngestionJobRepository repository,
                             DocumentDownloader downloader,
-                            PdfTextExtractor extractor) {
+                            PdfTextExtractor extractor,
+                            QuestionParserService questionParserService) {
         this.repository = repository;
         this.downloader = downloader;
         this.extractor = extractor;
+        this.questionParserService = questionParserService;
     }
 
     public IngestionJob process(String banca, Integer ano, String cargo,
@@ -54,8 +57,15 @@ public class IngestionService {
 
             job.setTextProva(extractor.extract(provaBytes));
             job.setTextGabarito(extractor.extract(gabaritoBytes));
+
+            var result = questionParserService.parse(
+                    job.getTextProva(), job.getTextGabarito(), bancaEnum, ano, cargo);
+            job.setQuestoesSalvas(result.questoesSalvas());
+            job.setQuestoesInvalidas(result.questoesInvalidas());
+
             job.setStatus(IngestionStatus.COMPLETED);
-            log.info("IngestionJob {} concluído com sucesso", job.getId());
+            log.info("IngestionJob {} concluído com sucesso — questoesSalvas={}, questoesInvalidas={}",
+                    job.getId(), result.questoesSalvas(), result.questoesInvalidas());
 
         } catch (Exception e) {
             log.error("Falha ao processar IngestionJob {}: {}", job.getId(), e.getMessage(), e);
