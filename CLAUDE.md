@@ -155,8 +155,47 @@ CRUD e consulta de questões com filtros por banca, área, ano e dificuldade.
 Entidade: Question.
 
 ### study
-Gerencia sessões de estudo — criação com filtros, registro de respostas,
-cálculo de resultado. Entidades: StudySession, Answer.
+Gerencia sessões de estudo. Uma `StudySession` é criada com filtros (banca, área,
+quantidade, modo) e contém uma lista ordenada de questões selecionadas aleatoriamente
+do banco via `$sample`. O usuário responde uma questão por vez; cada resposta é
+registrada como `Answer` embutida na sessão. `POST .../finish` finaliza a sessão e
+calcula o resultado geral e o desempenho por área.
+
+**Modos:** `ESTUDO` — gabarito revelado imediatamente após cada resposta.
+`SIMULADO` — gabarito revelado apenas ao finalizar.
+
+**Entidade StudySession** (`study_sessions`):
+- id, userId (extraído do JWT), banca? (Banca), areas? (List<String>)
+- quantidade (int), modo (enum: ESTUDO, SIMULADO)
+- status (enum: EM_ANDAMENTO, FINALIZADA)
+- questionIds (List<String>), currentIndex (int — questões respondidas até agora)
+- answers (List<Answer> embutida), resultado (Resultado embutido, preenchido no finish)
+- createdAt (@CreatedDate), updatedAt (@LastModifiedDate)
+
+**Answer** (embutida em StudySession — não coleção separada):
+- questionId, respostaUsuario (String), correta (boolean)
+- area (String — copiada da Question para facilitar agregação)
+
+**Resultado** (embutido — preenchido ao finalizar):
+- total (int), acertos (int), percentual (double)
+- desempenhoPorArea (Map<String, Double> — área → percentual)
+
+**Endpoints** (todos JWT obrigatório):
+- `POST /study/sessions` — body: banca?, areas?, quantidade (default 20), modo (default ESTUDO).
+  Seleciona `quantidade` questões válidas aleatórias com os filtros. Retorna 201 com a sessão.
+  Retorna 400 se não houver questões suficientes.
+- `GET /study/sessions/:id` — retorna sessão. 403 se userId ≠ JWT. 404 se não encontrada.
+- `POST /study/sessions/:id/answer` — body: questionId, resposta. Valida que questionId pertence
+  à sessão e que status=EM_ANDAMENTO. Incrementa currentIndex. Retorna Answer; em ESTUDO inclui
+  gabarito correto, em SIMULADO não. Retorna 400 se questão já respondida ou sessão FINALIZADA.
+- `POST /study/sessions/:id/finish` — finaliza (status FINALIZADA), calcula resultado.
+  Retorna sessão completa com resultado.
+
+**Componentes:**
+- `StudyService` — @Service; usa `MongoTemplate` para `$sample` com filtros
+- `StudyController` — extrai userId de `Authentication.getName()`
+
+**DTOs:** `CreateSessionRequest`, `AnswerRequest`, `AnswerResponse`
 
 ### explanation
 Gera explicações via Claude Haiku 4.5 sob demanda. Cache em MongoDB para não

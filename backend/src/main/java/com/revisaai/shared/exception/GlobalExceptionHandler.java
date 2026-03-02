@@ -71,6 +71,28 @@ public class GlobalExceptionHandler {
                 .body(new ApiError(400, "Parâmetro obrigatório ausente: " + ex.getParameterName()));
     }
 
+    @ExceptionHandler(StudySessionNotFoundException.class)
+    public ResponseEntity<ApiError> handleStudySessionNotFound(StudySessionNotFoundException ex) {
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(new ApiError(404, ex.getMessage()));
+    }
+
+    @ExceptionHandler(StudySessionForbiddenException.class)
+    public ResponseEntity<ApiError> handleStudySessionForbidden(StudySessionForbiddenException ex) {
+        return ResponseEntity
+                .status(HttpStatus.FORBIDDEN)
+                .body(new ApiError(403, ex.getMessage()));
+    }
+
+    @ExceptionHandler(InsufficientQuestionsException.class)
+    public ResponseEntity<ApiError> handleInsufficientQuestions(InsufficientQuestionsException ex) {
+        log.warn("Questões insuficientes: {}", ex.getMessage());
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(new ApiError(400, ex.getMessage()));
+    }
+
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ApiError> handleIllegalArgument(IllegalArgumentException ex) {
         log.warn("Argumento inválido: {}", ex.getMessage());
