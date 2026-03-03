@@ -505,9 +505,12 @@ Verifica novos PDFs nas fontes públicas e dispara pipeline de ingestão.
 - [x] Módulo user (TDD)
 
 ### Frontend — em andamento
-- [ ] Feature auth (landing, login, cadastro)
-- [ ] Feature dashboard
+- [x] Feature auth (landing, login, cadastro)
+- [~] Feature dashboard (em andamento)
 - [ ] Feature estudo
+
+### Dívida técnica
+- DashboardPage sem teste próprio — implementar junto à feature estudo
 
 ---
 
