@@ -228,7 +228,34 @@ Resposta em texto corrido, em português, sem markdown.
 Se a chamada à Anthropic falhar, a exceção propaga (falhas não são cacheadas).
 
 ### user
-Perfil, preferências e histórico agregado de desempenho. Entidade: UserProfile.
+Expõe endpoints de perfil e histórico de desempenho agregado. Não cria nova entidade
+nem nova coleção — agrega dados existentes da coleção `study_sessions` via
+`StudySessionRepository`.
+
+**Endpoints** (ambos com JWT obrigatório):
+- `GET /users/me/stats` — retorna estatísticas globais: total de questões respondidas,
+  percentual global de acertos, total de sessões finalizadas, e desempenho por área
+  (média do percentual de acerto por área, calculada entre as sessões que contêm
+  aquela área — não dividida pelo total de sessões).
+- `GET /users/me/history` — retorna lista das sessões finalizadas em ordem decrescente
+  de `createdAt`, com campos: id, banca, areas, quantidade, modo, resultado, createdAt.
+
+**DTOs de resposta:**
+- `UserStatsResponse` — record com totalQuestoes (int), percentualAcertos (double),
+  totalSessoes (int), desempenhoPorArea (Map<String, Double>)
+- `SessionSummary` — record com id, banca, areas, quantidade, modo, resultado, createdAt
+
+**Regras de agregação em `UserStatsResponse` (apenas sessões FINALIZADAS):**
+- `totalQuestoes` — soma de `answers.size()` de todas as sessões
+- `percentualAcertos` — (respostas corretas / totalQuestoes) × 100, ou 0.0 se sem sessões
+- `totalSessoes` — count de sessões FINALIZADAS
+- `desempenhoPorArea` — lê de `resultado.getDesempenhoPorArea()` de cada sessão;
+  agrupa por área e calcula a média. Divisor = número de sessões que contêm aquela área.
+
+**Componentes:**
+- `UserService` — @Service; usa `StudySessionRepository` com métodos derivados
+  `findByUserIdAndStatus` e `findByUserIdAndStatusOrderByCreatedAtDesc`
+- `UserController` — @RestController; userId extraído de `authentication.getName()`
 
 ---
 
