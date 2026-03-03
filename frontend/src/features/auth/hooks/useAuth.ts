@@ -1,3 +1,6 @@
-export const useAuth = (): never => {
-  throw new Error('não implementado');
+import { useAuthStore } from '../store/authStore';
+
+export const useAuth = () => {
+  const { isAuthenticated, userId, accessToken, clearAuth } = useAuthStore();
+  return { isAuthenticated, userId, accessToken, clearAuth };
 };
