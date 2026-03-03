@@ -494,6 +494,23 @@ Verifica novos PDFs nas fontes públicas e dispara pipeline de ingestão.
 
 ---
 
+## Status de Implementação
+
+### Backend — concluído
+- [x] Módulo auth (TDD)
+- [x] Módulo question (TDD)
+- [x] Módulo ingestion (TDD) — Etapa 1 e Etapa 2
+- [x] Módulo study (TDD)
+- [x] Módulo explanation (TDD)
+- [x] Módulo user (TDD)
+
+### Frontend — em andamento
+- [ ] Feature auth (landing, login, cadastro)
+- [ ] Feature dashboard
+- [ ] Feature estudo
+
+---
+
 ## Ordem de Desenvolvimento Recomendada
 1. docker-compose.yml + ambiente local funcionando
 2. Módulo auth (TDD) — registro, login, JWT, Google OAuth
