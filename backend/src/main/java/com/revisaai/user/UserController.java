@@ -22,11 +22,11 @@ public class UserController {
 
     @GetMapping("/stats")
     public ResponseEntity<UserStatsResponse> getStats(Authentication authentication) {
-        throw new UnsupportedOperationException("não implementado");
+        return ResponseEntity.ok(userService.getStats(authentication.getName()));
     }
 
     @GetMapping("/history")
     public ResponseEntity<List<SessionSummary>> getHistory(Authentication authentication) {
-        throw new UnsupportedOperationException("não implementado");
+        return ResponseEntity.ok(userService.getHistory(authentication.getName()));
     }
 }
