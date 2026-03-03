@@ -1,6 +1,5 @@
-import type { UseQueryResult } from '@tanstack/react-query';
-import type { SessionSummary } from '../types';
+import { useQuery } from '@tanstack/react-query';
+import { dashboardService } from '../services/dashboardService';
 
-export const useHistory = (): UseQueryResult<SessionSummary[]> => {
-  throw new Error('não implementado');
-};
+export const useHistory = () =>
+  useQuery({ queryKey: ['userHistory'], queryFn: dashboardService.getHistory });

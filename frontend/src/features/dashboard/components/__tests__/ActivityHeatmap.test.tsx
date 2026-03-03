@@ -12,6 +12,13 @@ const makeSession = (id: string, createdAt: string): SessionSummary => ({
   createdAt,
 });
 
+// Datas relativas a hoje para garantir que estejam dentro da janela de 364 dias
+const offsetDay = (daysAgo: number) => {
+  const d = new Date();
+  d.setDate(d.getDate() - daysAgo);
+  return d.toISOString().slice(0, 10);
+};
+
 describe('ActivityHeatmap', () => {
   it('renderiza pelo menos 364 células (52–53 semanas × 7 dias)', () => {
     render(<ActivityHeatmap sessions={[]} />);
@@ -20,10 +27,12 @@ describe('ActivityHeatmap', () => {
   });
 
   it('células dos dias com sessões têm data-count > 0', () => {
+    const day1 = offsetDay(30); // 30 dias atrás
+    const day2 = offsetDay(60); // 60 dias atrás — dia distinto
     const sessions = [
-      makeSession('1', '2025-03-01T10:00:00Z'),
-      makeSession('2', '2025-03-01T15:00:00Z'), // mesmo dia
-      makeSession('3', '2025-03-02T10:00:00Z'),
+      makeSession('1', `${day1}T10:00:00Z`),
+      makeSession('2', `${day1}T15:00:00Z`), // mesmo dia que session 1
+      makeSession('3', `${day2}T10:00:00Z`),
     ];
     render(<ActivityHeatmap sessions={sessions} />);
     const cells = screen.getAllByTestId('heatmap-cell');
