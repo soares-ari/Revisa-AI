@@ -9,6 +9,7 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Objects;
 
 @Service
 public class QuestionService {
@@ -38,6 +39,10 @@ public class QuestionService {
 
         log.debug("Consultando questões — banca={}, area={}, ano={}", banca, area, ano);
         return mongoTemplate.find(query, Question.class);
+    }
+
+    public List<String> findAreas() {
+        return List.of();
     }
 
     public Question findById(String id) {

@@ -20,13 +20,14 @@ public class IngestionController {
     public ResponseEntity<IngestionJob> create(
             @RequestParam String banca,
             @RequestParam(required = false) Integer ano,
-            @RequestParam(required = false) String cargo,
+            @RequestParam String orgao,
+            @RequestParam String cargo,
             @RequestParam(required = false) MultipartFile provaArquivo,
             @RequestParam(required = false) String provaUrl,
             @RequestParam(required = false) MultipartFile gabaritoArquivo,
             @RequestParam(required = false) String gabaritoUrl) {
 
-        var job = ingestionService.process(banca, ano, cargo,
+        var job = ingestionService.process(banca, ano, orgao, cargo,
                 provaArquivo, provaUrl, gabaritoArquivo, gabaritoUrl);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(job);

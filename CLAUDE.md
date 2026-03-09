@@ -123,8 +123,15 @@ síncrono — ocorre na mesma requisição do upload, sem @Async nesta fase.
 persistidas com `valid=false` e `validationError` descritivo. O job ainda termina
 COMPLETED; `questoesInvalidas` reflete o total no body da resposta.
 
+**Entidade Prova** (`provas`):
+- id, banca (enum Banca), ano (int), orgao (String), cargo (String), fileName (String)
+- createdAt (@CreatedDate)
+- Construtor com todos os campos exceto id e createdAt; apenas getters, sem setters
+- Criada no início do processamento do job a partir dos metadados recebidos
+
 **Entidade IngestionJob:**
-- id, banca (enum Banca), ano? (Integer), cargo? (String)
+- id, banca (enum Banca), ano? (Integer), orgao (String), cargo (String)
+- provaId (String) — preenchido após criação da Prova no início do job
 - textProva, textGabarito — textos brutos extraídos dos PDFs
 - status: PENDING → COMPLETED | FAILED
 - errorMessage? — mensagem de erro quando status=FAILED
@@ -135,13 +142,15 @@ COMPLETED; `questoesInvalidas` reflete o total no body da resposta.
 **Entidade Question — campos adicionados:**
 - `boolean valid` (default `true`) — `false` quando gabarito ou dificuldade inválidos
 - `String validationError` (opcional) — descreve o motivo da invalidação
+- `String provaId` (obrigatório) — referência à Prova de origem
 
-**Novos componentes:**
-- `QuestionParserService` — @Service; chama Anthropic, parseia JSON, salva Questions
+**Componentes:**
+- `ProvaRepository` — extends MongoRepository<Prova, String>
+- `QuestionParserService` — @Service; chama Anthropic, parseia JSON, salva Questions com provaId
 - `AnthropicConfig` — @Configuration; @Bean `AnthropicClient` com timeout de 120s
 
 **Requisição `POST /ingestion/jobs` (multipart/form-data):**
-- `banca` (obrigatório), `ano` (opcional), `cargo` (opcional)
+- `banca` (obrigatório), `orgao` (obrigatório), `cargo` (obrigatório), `ano` (opcional)
 - Para prova: `provaArquivo` (MultipartFile) **ou** `provaUrl` (String) — ao menos um
 - Para gabarito: `gabaritoArquivo` (MultipartFile) **ou** `gabaritoUrl` (String) — ao menos um
 
@@ -263,10 +272,11 @@ nem nova coleção — agrega dados existentes da coleção `study_sessions` via
 
 ```
 users             → perfil e credenciais
-questions         → questões com metadados
+questions         → questões com metadados (campo provaId obrigatório)
+provas            → provas de concurso (banca, ano, orgao, cargo, fileName)
 study_sessions    → sessões com respostas e resultados
 explanations      → cache de explicações geradas
-ingestion_jobs    → rastreamento de jobs de ingestão
+ingestion_jobs    → rastreamento de jobs de ingestão (campo provaId)
 ```
 
 ---
@@ -302,6 +312,7 @@ GET    /oauth2/callback/google         ← gerenciado pelo Spring Security
 
 GET    /questions?banca=&area=&ano=
 GET    /questions/:id
+GET    /questions/areas                ← JWT obrigatório; lista distintas de áreas cadastradas
 
 POST   /ingestion/jobs                 ← multipart/form-data, JWT obrigatório
 
@@ -506,11 +517,13 @@ Verifica novos PDFs nas fontes públicas e dispara pipeline de ingestão.
 
 ### Frontend — em andamento
 - [x] Feature auth (landing, login, cadastro)
-- [~] Feature dashboard (em andamento)
+- [x] Feature dashboard
+- [ ] Feature ingestão (tela de upload)
 - [ ] Feature estudo
 
 ### Dívida técnica
 - DashboardPage sem teste próprio — implementar junto à feature estudo
+- Área de conhecimento na StudyConfigPage: campo de busca com tags (não checkboxes), máx. 10 áreas
 
 ---
 
@@ -521,11 +534,18 @@ Verifica novos PDFs nas fontes públicas e dispara pipeline de ingestão.
 4. Módulo ingestion (TDD) — pipeline PDF → Claude → MongoDB
 5. Módulo study (TDD) — sessões, respostas, resultados
 6. Módulo explanation (TDD) — geração e cache
-7. Frontend auth — login, cadastro, Google OAuth
-8. Frontend dashboard — heatmap, gráficos
-9. Frontend estudo — configuração, modo de estudo, resultado
-10. GitHub Actions — CI/CD completo
-11. Deploy Railway + Vercel
+7. Módulo user (TDD) — stats e histórico
+8. Frontend auth — login, cadastro, Google OAuth
+9. Frontend dashboard — heatmap, gráficos
+10. **Backend ingestão — entidade Prova, provaId, GET /questions/areas (TDD)**
+11. **Frontend ingestão — tela de upload com feedback de progresso (TDD)**
+12. **Ingestão de provas reais para validação do pipeline**
+13. **Feature estudo — StudyConfigPage (busca/tags), StudyPage (alternativas dinâmicas), StudyResultPage (TDD)**
+14. Refinamentos de design e correções pós-validação com dados reais
+15. GitHub Actions — CI/CD completo
+16. Deploy Railway + Vercel
+
+*Pipeline automático de busca de PDFs fora do escopo desta versão.*
 
 ---
 

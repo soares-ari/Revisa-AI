@@ -67,7 +67,7 @@ class IngestionControllerTest {
         var job = new IngestionJob();
         job.setStatus(IngestionStatus.COMPLETED);
 
-        given(ingestionService.process(anyString(), any(), any(),
+        given(ingestionService.process(anyString(), any(), anyString(), anyString(),
                 any(), any(), any(), any()))
                 .willReturn(job);
 
@@ -76,7 +76,9 @@ class IngestionControllerTest {
                                 "application/pdf", PDF_BYTES))
                         .file(new MockMultipartFile("gabaritoArquivo", "gabarito.pdf",
                                 "application/pdf", PDF_BYTES))
-                        .param("banca", "CEBRASPE"))
+                        .param("banca", "CEBRASPE")
+                        .param("orgao", "PF")
+                        .param("cargo", "Analista"))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.status").value("COMPLETED"));
     }
@@ -97,7 +99,7 @@ class IngestionControllerTest {
     @WithMockUser
     @DisplayName("POST /ingestion/jobs sem fonte da prova retorna 400")
     void post_semFonteDaProva_retorna400() throws Exception {
-        given(ingestionService.process(anyString(), any(), any(),
+        given(ingestionService.process(anyString(), any(), anyString(), anyString(),
                 any(), any(), any(), any()))
                 .willThrow(new IllegalArgumentException("Fonte da prova obrigatória"));
 
@@ -112,7 +114,7 @@ class IngestionControllerTest {
     @WithMockUser
     @DisplayName("POST /ingestion/jobs sem fonte do gabarito retorna 400")
     void post_semFonteDoGabarito_retorna400() throws Exception {
-        given(ingestionService.process(anyString(), any(), any(),
+        given(ingestionService.process(anyString(), any(), anyString(), anyString(),
                 any(), any(), any(), any()))
                 .willThrow(new IllegalArgumentException("Fonte do gabarito obrigatória"));
 

@@ -27,6 +27,8 @@ public class IngestionJob {
     private int questoesSalvas;
     private int questoesInvalidas;
 
+    private String provaId;
+
     @CreatedDate
     private Instant createdAt;
 
@@ -62,4 +64,6 @@ public class IngestionJob {
     public void setErrorMessage(String errorMessage) { this.errorMessage = errorMessage; }
     public void setQuestoesSalvas(int questoesSalvas) { this.questoesSalvas = questoesSalvas; }
     public void setQuestoesInvalidas(int questoesInvalidas) { this.questoesInvalidas = questoesInvalidas; }
+    public String getProvaId() { return provaId; }
+    public void setProvaId(String provaId) { this.provaId = provaId; }
 }

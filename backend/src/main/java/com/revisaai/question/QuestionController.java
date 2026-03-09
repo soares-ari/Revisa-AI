@@ -23,6 +23,11 @@ public class QuestionController {
         return ResponseEntity.ok(questionService.findAll(banca, area, ano));
     }
 
+    @GetMapping("/areas")
+    public ResponseEntity<List<String>> findAreas() {
+        return ResponseEntity.ok(questionService.findAreas());
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<Question> findById(@PathVariable String id) {
         return ResponseEntity.ok(questionService.findById(id));

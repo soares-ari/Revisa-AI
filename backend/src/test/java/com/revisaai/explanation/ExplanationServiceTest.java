@@ -40,7 +40,7 @@ class ExplanationServiceTest {
 
         question = new Question("Julgue o item a seguir.",
                 List.of("CERTO", "ERRADO"), "CERTO",
-                Banca.CEBRASPE, 2023, "Analista", "Informática", Dificuldade.MEDIO);
+                Banca.CEBRASPE, 2023, "Analista", "Informática", Dificuldade.MEDIO, null);
         lenient().when(explanationRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
     }
 

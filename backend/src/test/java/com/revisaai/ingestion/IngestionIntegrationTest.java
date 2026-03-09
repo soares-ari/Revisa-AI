@@ -83,7 +83,7 @@ class IngestionIntegrationTest {
         ingestionJobRepository.deleteAll();
         questionRepository.deleteAll();
 
-        given(questionParserService.parse(any(), any(), any(), any(), any()))
+        given(questionParserService.parse(any(), any(), any(), any(), any(), any()))
                 .willReturn(new ParseResult(2, 0));
 
         var register = new RegisterRequest("Admin", "admin@test.com", "senha123");
@@ -124,6 +124,8 @@ class IngestionIntegrationTest {
 
         var body = new LinkedMultiValueMap<String, Object>();
         body.add("banca", "CEBRASPE");
+        body.add("orgao", "PF");
+        body.add("cargo", "Analista");
         body.add("provaArquivo", new ByteArrayResource(MINIMAL_PDF) {
             @Override public String getFilename() { return "prova.pdf"; }
         });
@@ -159,6 +161,8 @@ class IngestionIntegrationTest {
 
         var body = new LinkedMultiValueMap<String, Object>();
         body.add("banca", "FGV");
+        body.add("orgao", "AGU");
+        body.add("cargo", "Auditor");
         body.add("provaUrl", provaUrl);
         body.add("gabaritoUrl", gabaritoUrl);
 
@@ -178,6 +182,8 @@ class IngestionIntegrationTest {
 
         var body = new LinkedMultiValueMap<String, Object>();
         body.add("banca", "INVALIDA");
+        body.add("orgao", "PF");
+        body.add("cargo", "Analista");
         body.add("provaArquivo", new ByteArrayResource(MINIMAL_PDF) {
             @Override public String getFilename() { return "prova.pdf"; }
         });
@@ -200,6 +206,8 @@ class IngestionIntegrationTest {
 
         var body = new LinkedMultiValueMap<String, Object>();
         body.add("banca", "CEBRASPE");
+        body.add("orgao", "PF");
+        body.add("cargo", "Analista");
         body.add("provaArquivo", new ByteArrayResource(MINIMAL_PDF) {
             @Override public String getFilename() { return "prova.pdf"; }
         });

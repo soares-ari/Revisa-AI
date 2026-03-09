@@ -32,6 +32,8 @@ public class Question {
     private boolean valid = true;
     private String validationError;
 
+    private String provaId;
+
     @CreatedDate
     private Instant createdAt;
 
@@ -39,7 +41,8 @@ public class Question {
     }
 
     public Question(String enunciado, List<String> alternativas, String gabarito,
-                    Banca banca, Integer ano, String cargo, String area, Dificuldade dificuldade) {
+                    Banca banca, Integer ano, String cargo, String area, Dificuldade dificuldade,
+                    String provaId) {
         if (!alternativas.contains(gabarito)) {
             throw new IllegalArgumentException(
                     "Gabarito '" + gabarito + "' não está nas alternativas: " + alternativas);
@@ -52,12 +55,13 @@ public class Question {
         this.cargo = cargo;
         this.area = area;
         this.dificuldade = dificuldade;
+        this.provaId = provaId;
     }
 
     public static Question createInvalid(String enunciado, List<String> alternativas,
                                           String gabarito, Banca banca, Integer ano,
                                           String cargo, String area, Dificuldade dificuldade,
-                                          String validationError) {
+                                          String validationError, String provaId) {
         var q = new Question();
         q.enunciado = enunciado;
         q.alternativas = alternativas;
@@ -69,6 +73,7 @@ public class Question {
         q.dificuldade = dificuldade;
         q.valid = false;
         q.validationError = validationError;
+        q.provaId = provaId;
         return q;
     }
 
@@ -83,5 +88,6 @@ public class Question {
     public Dificuldade getDificuldade() { return dificuldade; }
     public boolean isValid() { return valid; }
     public String getValidationError() { return validationError; }
+    public String getProvaId() { return provaId; }
     public Instant getCreatedAt() { return createdAt; }
 }

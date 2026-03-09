@@ -12,21 +12,24 @@ public class IngestionService {
     private static final Logger log = LoggerFactory.getLogger(IngestionService.class);
 
     private final IngestionJobRepository repository;
+    private final ProvaRepository provaRepository;
     private final DocumentDownloader downloader;
     private final PdfTextExtractor extractor;
     private final QuestionParserService questionParserService;
 
     public IngestionService(IngestionJobRepository repository,
+                            ProvaRepository provaRepository,
                             DocumentDownloader downloader,
                             PdfTextExtractor extractor,
                             QuestionParserService questionParserService) {
         this.repository = repository;
+        this.provaRepository = provaRepository;
         this.downloader = downloader;
         this.extractor = extractor;
         this.questionParserService = questionParserService;
     }
 
-    public IngestionJob process(String banca, Integer ano, String cargo,
+    public IngestionJob process(String banca, Integer ano, String orgao, String cargo,
                                 MultipartFile provaArquivo, String provaUrl,
                                 MultipartFile gabaritoArquivo, String gabaritoUrl) {
         var bancaEnum = Banca.valueOf(banca.toUpperCase());
@@ -59,7 +62,7 @@ public class IngestionService {
             job.setTextGabarito(extractor.extract(gabaritoBytes));
 
             var result = questionParserService.parse(
-                    job.getTextProva(), job.getTextGabarito(), bancaEnum, ano, cargo);
+                    job.getTextProva(), job.getTextGabarito(), bancaEnum, ano, cargo, null);
             job.setQuestoesSalvas(result.questoesSalvas());
             job.setQuestoesInvalidas(result.questoesInvalidas());
 

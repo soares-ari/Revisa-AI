@@ -87,9 +87,9 @@ class StudyIntegrationTest {
         jwtToken = authResponse.accessToken();
 
         questionRepository.save(new Question("Questão 1", List.of("CERTO", "ERRADO"), "CERTO",
-                Banca.CEBRASPE, 2023, "Analista", "Informática", Dificuldade.MEDIO));
+                Banca.CEBRASPE, 2023, "Analista", "Informática", Dificuldade.MEDIO, null));
         questionRepository.save(new Question("Questão 2", List.of("CERTO", "ERRADO"), "ERRADO",
-                Banca.CEBRASPE, 2023, "Analista", "Informática", Dificuldade.FACIL));
+                Banca.CEBRASPE, 2023, "Analista", "Informática", Dificuldade.FACIL, null));
     }
 
     @Test

@@ -51,11 +51,11 @@ class StudyServiceTest {
         service = new StudyService(mongoTemplate, sessionRepository, questionRepository);
 
         q1 = new Question("Enunciado 1", List.of("CERTO", "ERRADO"), "CERTO",
-                Banca.CEBRASPE, 2023, "Analista", "Informática", Dificuldade.MEDIO);
+                Banca.CEBRASPE, 2023, "Analista", "Informática", Dificuldade.MEDIO, null);
         setId(q1, "q1");
 
         q2 = new Question("Enunciado 2", List.of("CERTO", "ERRADO"), "ERRADO",
-                Banca.CEBRASPE, 2023, "Analista", "Português", Dificuldade.FACIL);
+                Banca.CEBRASPE, 2023, "Analista", "Português", Dificuldade.FACIL, null);
         setId(q2, "q2");
 
         lenient().when(sessionRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));

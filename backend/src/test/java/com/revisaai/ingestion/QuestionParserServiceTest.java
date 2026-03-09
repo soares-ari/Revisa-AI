@@ -29,6 +29,7 @@ class QuestionParserServiceTest {
     private static final Banca BANCA = Banca.CEBRASPE;
     private static final Integer ANO = 2023;
     private static final String CARGO = "Analista";
+    private static final String PROVA_ID = "prova-1";
 
     @BeforeEach
     void setUp() {
@@ -63,7 +64,7 @@ class QuestionParserServiceTest {
                 """;
         mockClaudeResponse(json);
 
-        var result = service.parse("texto prova", "texto gabarito", BANCA, ANO, CARGO);
+        var result = service.parse("texto prova", "texto gabarito", BANCA, ANO, CARGO, PROVA_ID);
 
         assertThat(result.questoesSalvas()).isEqualTo(2);
         assertThat(result.questoesInvalidas()).isEqualTo(0);
@@ -86,7 +87,7 @@ class QuestionParserServiceTest {
                 """;
         mockClaudeResponse(json);
 
-        var result = service.parse("texto prova", "texto gabarito", BANCA, ANO, CARGO);
+        var result = service.parse("texto prova", "texto gabarito", BANCA, ANO, CARGO, PROVA_ID);
 
         assertThat(result.questoesSalvas()).isEqualTo(0);
         assertThat(result.questoesInvalidas()).isEqualTo(1);
@@ -103,7 +104,7 @@ class QuestionParserServiceTest {
     void parse_jsonVazio_retornaZerosSemSalvar() {
         mockClaudeResponse("[]");
 
-        var result = service.parse("texto prova", "texto gabarito", BANCA, ANO, CARGO);
+        var result = service.parse("texto prova", "texto gabarito", BANCA, ANO, CARGO, PROVA_ID);
 
         assertThat(result.questoesSalvas()).isEqualTo(0);
         assertThat(result.questoesInvalidas()).isEqualTo(0);
@@ -116,7 +117,7 @@ class QuestionParserServiceTest {
         mockClaudeResponse("isso não é json válido");
 
         assertThatThrownBy(() ->
-                service.parse("texto prova", "texto gabarito", BANCA, ANO, CARGO))
+                service.parse("texto prova", "texto gabarito", BANCA, ANO, CARGO, PROVA_ID))
                 .isInstanceOf(RuntimeException.class);
     }
 
@@ -136,7 +137,7 @@ class QuestionParserServiceTest {
                 """;
         mockClaudeResponse(json);
 
-        var result = service.parse("texto prova", "texto gabarito", BANCA, ANO, CARGO);
+        var result = service.parse("texto prova", "texto gabarito", BANCA, ANO, CARGO, PROVA_ID);
 
         assertThat(result.questoesInvalidas()).isEqualTo(1);
         var captor = ArgumentCaptor.forClass(Question.class);

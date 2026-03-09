@@ -85,9 +85,9 @@ class QuestionIntegrationTest {
     void getAll_comJwt_retorna200ComQuestoes() throws Exception {
         questionRepository.saveAll(List.of(
                 new Question("Enunciado 1", List.of("CERTO", "ERRADO"), "CERTO",
-                        Banca.CEBRASPE, 2023, "Analista", "Informática", Dificuldade.MEDIO),
+                        Banca.CEBRASPE, 2023, "Analista", "Informática", Dificuldade.MEDIO, null),
                 new Question("Enunciado 2", List.of("A", "B", "C", "D", "E"), "A",
-                        Banca.FGV, 2022, "Auditor", "Direito", Dificuldade.FACIL)
+                        Banca.FGV, 2022, "Auditor", "Direito", Dificuldade.FACIL, null)
         ));
 
         mockMvc.perform(get("/questions")
@@ -101,11 +101,11 @@ class QuestionIntegrationTest {
     void getAll_comFiltroBanca_retornaApenasBancaCorreta() throws Exception {
         questionRepository.saveAll(List.of(
                 new Question("Enunciado CEBRASPE", List.of("CERTO", "ERRADO"), "CERTO",
-                        Banca.CEBRASPE, 2023, "Analista", "Informática", Dificuldade.MEDIO),
+                        Banca.CEBRASPE, 2023, "Analista", "Informática", Dificuldade.MEDIO, null),
                 new Question("Enunciado FGV", List.of("A", "B", "C", "D", "E"), "A",
-                        Banca.FGV, 2022, "Auditor", "Direito", Dificuldade.FACIL),
+                        Banca.FGV, 2022, "Auditor", "Direito", Dificuldade.FACIL, null),
                 new Question("Enunciado CESGRANRIO", List.of("A", "B", "C", "D", "E"), "C",
-                        Banca.CESGRANRIO, 2021, "Técnico", "Matemática", Dificuldade.DIFICIL)
+                        Banca.CESGRANRIO, 2021, "Técnico", "Matemática", Dificuldade.DIFICIL, null)
         ));
 
         mockMvc.perform(get("/questions")
@@ -121,7 +121,7 @@ class QuestionIntegrationTest {
     void getById_idExistente_retornaQuestao() throws Exception {
         var saved = questionRepository.save(
                 new Question("Questão específica", List.of("CERTO", "ERRADO"), "ERRADO",
-                        Banca.CEBRASPE, 2023, "Analista", "Português", Dificuldade.FACIL));
+                        Banca.CEBRASPE, 2023, "Analista", "Português", Dificuldade.FACIL, null));
 
         mockMvc.perform(get("/questions/" + saved.getId())
                         .header("Authorization", "Bearer " + jwtToken))

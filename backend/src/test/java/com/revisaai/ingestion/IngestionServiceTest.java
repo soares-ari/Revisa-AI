@@ -15,6 +15,7 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
 
@@ -23,6 +24,9 @@ class IngestionServiceTest {
 
     @Mock
     private IngestionJobRepository repository;
+
+    @Mock
+    private ProvaRepository provaRepository;
 
     @Mock
     private DocumentDownloader downloader;
@@ -39,8 +43,8 @@ class IngestionServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new IngestionService(repository, downloader, extractor, questionParserService);
-        lenient().when(questionParserService.parse(any(), any(), any(), any(), any()))
+        service = new IngestionService(repository, provaRepository, downloader, extractor, questionParserService);
+        lenient().when(questionParserService.parse(any(), any(), any(), any(), any(), any()))
                 .thenReturn(new ParseResult(0, 0));
     }
 
@@ -55,7 +59,7 @@ class IngestionServiceTest {
         given(repository.save(any())).willAnswer(inv -> inv.getArgument(0));
         given(extractor.extract(PDF_BYTES)).willReturn("texto extraído");
 
-        var job = service.process("CEBRASPE", null, null,
+        var job = service.process("CEBRASPE", null, "Órgão", null,
                 provaFile, null, gabaritoFile, null);
 
         assertThat(job.getStatus()).isEqualTo(IngestionStatus.COMPLETED);
@@ -74,7 +78,7 @@ class IngestionServiceTest {
         given(downloader.download("http://gabarito.pdf")).willReturn(PDF_BYTES);
         given(extractor.extract(PDF_BYTES)).willReturn("texto via url");
 
-        var job = service.process("FGV", 2023, "Analista",
+        var job = service.process("FGV", 2023, "Órgão", "Analista",
                 null, "http://prova.pdf", null, "http://gabarito.pdf");
 
         assertThat(job.getStatus()).isEqualTo(IngestionStatus.COMPLETED);
@@ -95,7 +99,7 @@ class IngestionServiceTest {
         given(downloader.download("http://gabarito.pdf")).willReturn(PDF_BYTES);
         given(extractor.extract(PDF_BYTES)).willReturn("texto");
 
-        var job = service.process("CESGRANRIO", null, null,
+        var job = service.process("CESGRANRIO", null, "Órgão", null,
                 provaFile, null, null, "http://gabarito.pdf");
 
         assertThat(job.getStatus()).isEqualTo(IngestionStatus.COMPLETED);
@@ -107,7 +111,7 @@ class IngestionServiceTest {
     @DisplayName("process sem fonte da prova lança IllegalArgumentException")
     void process_semFonteDaProva_throwsIllegalArgumentException() {
         assertThatThrownBy(() ->
-                service.process("CEBRASPE", null, null,
+                service.process("CEBRASPE", null, "Órgão", null,
                         null, null, null, "http://gabarito.pdf"))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("prova");
@@ -120,7 +124,7 @@ class IngestionServiceTest {
                 "application/pdf", PDF_BYTES);
 
         assertThatThrownBy(() ->
-                service.process("CEBRASPE", null, null,
+                service.process("CEBRASPE", null, "Órgão", null,
                         provaFile, null, null, null))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("gabarito");
@@ -130,7 +134,7 @@ class IngestionServiceTest {
     @DisplayName("process com banca inválida lança IllegalArgumentException antes de qualquer I/O")
     void process_bancaInvalida_throwsIllegalArgumentException() {
         assertThatThrownBy(() ->
-                service.process("INVALIDA", null, null,
+                service.process("INVALIDA", null, "Órgão", null,
                         null, "http://prova.pdf", null, "http://gabarito.pdf"))
                 .isInstanceOf(IllegalArgumentException.class);
 
@@ -149,7 +153,7 @@ class IngestionServiceTest {
         given(repository.save(any())).willAnswer(inv -> inv.getArgument(0));
         given(extractor.extract(PDF_BYTES)).willThrow(new IOException("PDF corrompido"));
 
-        var job = service.process("FGV", null, null,
+        var job = service.process("FGV", null, "Órgão", null,
                 provaFile, null, gabaritoFile, null);
 
         assertThat(job.getStatus()).isEqualTo(IngestionStatus.FAILED);
@@ -167,10 +171,10 @@ class IngestionServiceTest {
 
         given(repository.save(any())).willAnswer(inv -> inv.getArgument(0));
         given(extractor.extract(PDF_BYTES)).willReturn("texto prova").willReturn("texto gabarito");
-        given(questionParserService.parse(any(), any(), any(), any(), any()))
+        given(questionParserService.parse(any(), any(), any(), any(), any(), any()))
                 .willReturn(new ParseResult(3, 1));
 
-        var job = service.process("CEBRASPE", 2024, "Analista",
+        var job = service.process("CEBRASPE", 2024, "Órgão", "Analista",
                 provaFile, null, gabaritoFile, null);
 
         assertThat(job.getStatus()).isEqualTo(IngestionStatus.COMPLETED);
@@ -178,7 +182,7 @@ class IngestionServiceTest {
         assertThat(job.getQuestoesInvalidas()).isEqualTo(1);
         verify(questionParserService).parse(
                 eq("texto prova"), eq("texto gabarito"),
-                eq(Banca.CEBRASPE), eq(2024), eq("Analista"));
+                eq(Banca.CEBRASPE), eq(2024), eq("Analista"), isNull());
     }
 
     @Test
@@ -191,10 +195,10 @@ class IngestionServiceTest {
 
         given(repository.save(any())).willAnswer(inv -> inv.getArgument(0));
         given(extractor.extract(PDF_BYTES)).willReturn("texto");
-        given(questionParserService.parse(any(), any(), any(), any(), any()))
+        given(questionParserService.parse(any(), any(), any(), any(), any(), any()))
                 .willThrow(new RuntimeException("Falha na API Anthropic"));
 
-        var job = service.process("FGV", null, null,
+        var job = service.process("FGV", null, "Órgão", null,
                 provaFile, null, gabaritoFile, null);
 
         assertThat(job.getStatus()).isEqualTo(IngestionStatus.FAILED);

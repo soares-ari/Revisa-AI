@@ -31,7 +31,7 @@ public class QuestionParserService {
     }
 
     public ParseResult parse(String textProva, String textGabarito,
-                              Banca banca, Integer ano, String cargo) {
+                              Banca banca, Integer ano, String cargo, String provaId) {
         var prompt = """
                 Você receberá o texto extraído de uma prova de concurso público e de seu gabarito.
                 Extraia todas as questões e combine com as respostas do gabarito.
@@ -64,13 +64,13 @@ public class QuestionParserService {
             try {
                 var dificuldade = Dificuldade.valueOf(item.dificuldade());
                 question = new Question(item.enunciado(), item.alternativas(),
-                        item.gabarito(), banca, ano, cargo, item.area(), dificuldade);
+                        item.gabarito(), banca, ano, cargo, item.area(), dificuldade, provaId);
                 questoesSalvas++;
             } catch (IllegalArgumentException e) {
                 var dificuldade = parseDificuldadeOrNull(item.dificuldade());
                 question = Question.createInvalid(item.enunciado(), item.alternativas(),
                         item.gabarito(), banca, ano, cargo, item.area(), dificuldade,
-                        e.getMessage());
+                        e.getMessage(), provaId);
                 questoesInvalidas++;
             }
             questionRepository.save(question);

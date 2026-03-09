@@ -61,7 +61,8 @@ class QuestionControllerTest {
             2023,
             "Analista de TI",
             "Informática",
-            Dificuldade.MEDIO
+            Dificuldade.MEDIO,
+            null
     );
 
     @Test

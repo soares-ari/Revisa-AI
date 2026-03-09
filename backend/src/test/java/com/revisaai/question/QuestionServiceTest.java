@@ -40,9 +40,9 @@ class QuestionServiceTest {
     void setUp() {
         service = new QuestionService(mongoTemplate, questionRepository);
         cebraspe = new Question("Enunciado 1", List.of("CERTO", "ERRADO"), "CERTO",
-                Banca.CEBRASPE, 2023, "Analista de TI", "Informática", Dificuldade.MEDIO);
+                Banca.CEBRASPE, 2023, "Analista de TI", "Informática", Dificuldade.MEDIO, null);
         fgv = new Question("Enunciado 2", List.of("A", "B", "C", "D", "E"), "B",
-                Banca.FGV, 2022, "Auditor", "Direito", Dificuldade.DIFICIL);
+                Banca.FGV, 2022, "Auditor", "Direito", Dificuldade.DIFICIL, null);
     }
 
     @Test
@@ -120,7 +120,7 @@ class QuestionServiceTest {
     void question_gabaritoForaDasAlternativas_throwsIllegalArgumentException() {
         assertThatThrownBy(() ->
                 new Question("Enunciado", List.of("CERTO", "ERRADO"), "INCORRETO",
-                        Banca.CEBRASPE, 2023, "Cargo", "Área", Dificuldade.FACIL))
+                        Banca.CEBRASPE, 2023, "Cargo", "Área", Dificuldade.FACIL, null))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("INCORRETO");
     }
