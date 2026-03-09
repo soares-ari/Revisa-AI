@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Home, BookOpen, BarChart2, Settings, Menu, X } from 'lucide-react';
+import { Home, BookOpen, BarChart2, Settings, Menu, X, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { StatsCards } from '../components/StatsCards';
@@ -14,6 +14,7 @@ const navLinks = [
   { to: '/', label: 'Home', icon: Home },
   { to: '/study/new', label: 'Estudar', icon: BookOpen },
   { to: '/dashboard', label: 'Stats', icon: BarChart2 },
+  { to: '/ingestion/new', label: 'Ingestão', icon: Upload },
   { to: '/settings', label: 'Config', icon: Settings },
 ];
 

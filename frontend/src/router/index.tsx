@@ -3,6 +3,7 @@ import { LandingPage } from '@/features/auth/pages/LandingPage';
 import { LoginPage } from '@/features/auth/pages/LoginPage';
 import { RegisterPage } from '@/features/auth/pages/RegisterPage';
 import { DashboardPage } from '@/features/dashboard/pages/DashboardPage';
+import { IngestionPage } from '@/features/ingestion/pages/IngestionPage';
 import { ProtectedRoute } from './ProtectedRoute';
 
 export const router = createBrowserRouter([
@@ -11,6 +12,9 @@ export const router = createBrowserRouter([
   { path: '/register', element: <RegisterPage /> },
   {
     element: <ProtectedRoute />,
-    children: [{ path: '/dashboard', element: <DashboardPage /> }],
+    children: [
+      { path: '/dashboard', element: <DashboardPage /> },
+      { path: '/ingestion/new', element: <IngestionPage /> },
+    ],
   },
 ]);

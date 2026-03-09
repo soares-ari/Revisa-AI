@@ -518,7 +518,7 @@ Verifica novos PDFs nas fontes públicas e dispara pipeline de ingestão.
 ### Frontend — em andamento
 - [x] Feature auth (landing, login, cadastro)
 - [x] Feature dashboard
-- [ ] Feature ingestão (tela de upload)
+- [~] Feature ingestão (tela de upload) — em andamento
 - [ ] Feature estudo
 
 ### Dívida técnica
@@ -537,7 +537,7 @@ Verifica novos PDFs nas fontes públicas e dispara pipeline de ingestão.
 7. Módulo user (TDD) — stats e histórico
 8. Frontend auth — login, cadastro, Google OAuth
 9. Frontend dashboard — heatmap, gráficos
-10. **Backend ingestão — entidade Prova, provaId, GET /questions/areas (TDD)**
+10. Backend ingestão — entidade Prova, provaId, GET /questions/areas (TDD)
 11. **Frontend ingestão — tela de upload com feedback de progresso (TDD)**
 12. **Ingestão de provas reais para validação do pipeline**
 13. **Feature estudo — StudyConfigPage (busca/tags), StudyPage (alternativas dinâmicas), StudyResultPage (TDD)**

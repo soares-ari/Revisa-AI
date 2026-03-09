@@ -36,4 +36,33 @@ export const handlers = [
       },
     ])
   ),
+  http.post(`${BASE}/ingestion/jobs`, () =>
+    HttpResponse.json(
+      {
+        id: 'job-1',
+        status: 'COMPLETED',
+        banca: 'CEBRASPE',
+        ano: 2024,
+        orgao: 'PF',
+        cargo: 'Analista',
+        questoesSalvas: 10,
+        questoesInvalidas: 2,
+        errorMessage: null,
+      },
+      { status: 201 }
+    )
+  ),
+  http.get(`${BASE}/ingestion/jobs/:id`, () =>
+    HttpResponse.json({
+      id: 'job-1',
+      status: 'COMPLETED',
+      banca: 'CEBRASPE',
+      ano: 2024,
+      orgao: 'PF',
+      cargo: 'Analista',
+      questoesSalvas: 10,
+      questoesInvalidas: 2,
+      errorMessage: null,
+    })
+  ),
 ];
