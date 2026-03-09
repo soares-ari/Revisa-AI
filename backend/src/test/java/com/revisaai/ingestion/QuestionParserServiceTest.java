@@ -68,7 +68,11 @@ class QuestionParserServiceTest {
 
         assertThat(result.questoesSalvas()).isEqualTo(2);
         assertThat(result.questoesInvalidas()).isEqualTo(0);
-        verify(questionRepository, times(2)).save(any(Question.class));
+
+        var captor = ArgumentCaptor.forClass(Question.class);
+        verify(questionRepository, times(2)).save(captor.capture());
+        // FALHA — stub passa null como provaId
+        captor.getAllValues().forEach(q -> assertThat(q.getProvaId()).isEqualTo(PROVA_ID));
     }
 
     @Test
@@ -97,6 +101,8 @@ class QuestionParserServiceTest {
         var saved = captor.getValue();
         assertThat(saved.isValid()).isFalse();
         assertThat(saved.getValidationError()).isNotBlank();
+        // FALHA — stub passa null como provaId
+        assertThat(saved.getProvaId()).isEqualTo(PROVA_ID);
     }
 
     @Test

@@ -14,6 +14,8 @@ import org.springframework.data.mongodb.core.query.Query;
 import java.util.List;
 import java.util.Optional;
 
+import static org.mockito.ArgumentMatchers.anyString;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
@@ -113,6 +115,19 @@ class QuestionServiceTest {
         assertThatThrownBy(() -> service.findById("nao-existe"))
                 .isInstanceOf(QuestionNotFoundException.class)
                 .hasMessageContaining("nao-existe");
+    }
+
+    @Test
+    @DisplayName("findAreas usa MongoTemplate distinct e retorna lista ordenada")
+    void findAreas_retornaListaOrdenadaDeAreas() {
+        given(mongoTemplate.findDistinct(any(Query.class), eq("area"), eq(Question.class), eq(String.class)))
+                .willReturn(List.of("Português", "Informática", "Direito"));
+
+        var result = service.findAreas();
+
+        // FALHA — stub retorna List.of()
+        assertThat(result).containsExactly("Direito", "Informática", "Português");
+        verify(mongoTemplate).findDistinct(any(Query.class), anyString(), eq(Question.class), eq(String.class));
     }
 
     @Test

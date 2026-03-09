@@ -122,4 +122,17 @@ class QuestionControllerTest {
         mockMvc.perform(get("/questions/nao-existe"))
                 .andExpect(status().isNotFound());
     }
+
+    @Test
+    @WithMockUser
+    @DisplayName("GET /questions/areas autenticado retorna 200 com lista de áreas")
+    void getAreas_autenticado_retorna200ComLista() throws Exception {
+        given(questionService.findAreas())
+                .willReturn(List.of("Direito", "Informática", "Português"));
+
+        mockMvc.perform(get("/questions/areas"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0]").value("Direito"))
+                .andExpect(jsonPath("$[2]").value("Português"));
+    }
 }

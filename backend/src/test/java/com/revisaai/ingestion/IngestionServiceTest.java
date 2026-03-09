@@ -12,10 +12,7 @@ import org.springframework.mock.web.MockMultipartFile;
 import java.io.IOException;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
 
@@ -183,6 +180,78 @@ class IngestionServiceTest {
         verify(questionParserService).parse(
                 eq("texto prova"), eq("texto gabarito"),
                 eq(Banca.CEBRASPE), eq(2024), eq("Analista"), isNull());
+    }
+
+    @Test
+    @DisplayName("process cria Prova no banco com metadados corretos")
+    void process_criaProvaNoBancoComMetadadosCorretos() throws IOException {
+        var provaFile = new MockMultipartFile("provaArquivo", "prova.pdf",
+                "application/pdf", PDF_BYTES);
+        var gabaritoFile = new MockMultipartFile("gabaritoArquivo", "gabarito.pdf",
+                "application/pdf", PDF_BYTES);
+
+        given(repository.save(any())).willAnswer(inv -> inv.getArgument(0));
+        given(extractor.extract(PDF_BYTES)).willReturn("texto");
+
+        service.process("CEBRASPE", 2024, "PF", "Analista",
+                provaFile, null, gabaritoFile, null);
+
+        // FALHA — stub não chama provaRepository.save()
+        verify(provaRepository).save(argThat(p ->
+                p.getBanca() == Banca.CEBRASPE
+                && p.getOrgao().equals("PF")
+                && p.getCargo().equals("Analista")
+                && p.getAno() == 2024));
+    }
+
+    @Test
+    @DisplayName("process preenche provaId no job após criação da Prova")
+    void process_preencheProvaIdNoJobAposCreacaoProva() throws IOException {
+        var provaFile = new MockMultipartFile("provaArquivo", "prova.pdf",
+                "application/pdf", PDF_BYTES);
+        var gabaritoFile = new MockMultipartFile("gabaritoArquivo", "gabarito.pdf",
+                "application/pdf", PDF_BYTES);
+
+        given(repository.save(any())).willAnswer(inv -> inv.getArgument(0));
+        given(extractor.extract(PDF_BYTES)).willReturn("texto");
+        var prova = new Prova(Banca.CEBRASPE, 2024, "PF", "Analista", "prova.pdf");
+        given(provaRepository.save(any())).willReturn(prova);
+
+        var job = service.process("CEBRASPE", 2024, "PF", "Analista",
+                provaFile, null, gabaritoFile, null);
+
+        // FALHA — stub não seta provaId no job
+        assertThat(job.getProvaId()).isNotNull();
+    }
+
+    @Test
+    @DisplayName("process passa provaId correto para QuestionParserService")
+    void process_passaProvaIdCorretoParaQuestionParser() throws IOException {
+        var provaFile = new MockMultipartFile("provaArquivo", "prova.pdf",
+                "application/pdf", PDF_BYTES);
+        var gabaritoFile = new MockMultipartFile("gabaritoArquivo", "gabarito.pdf",
+                "application/pdf", PDF_BYTES);
+
+        given(repository.save(any())).willAnswer(inv -> inv.getArgument(0));
+        given(extractor.extract(PDF_BYTES)).willReturn("texto");
+        var prova = new Prova(Banca.CEBRASPE, 2024, "PF", "Analista", "prova.pdf");
+        try {
+            var idField = Prova.class.getDeclaredField("id");
+            idField.setAccessible(true);
+            idField.set(prova, "prova-123");
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        given(provaRepository.save(any())).willReturn(prova);
+        given(questionParserService.parse(any(), any(), any(), any(), any(), any()))
+                .willReturn(new ParseResult(2, 0));
+
+        service.process("CEBRASPE", 2024, "PF", "Analista",
+                provaFile, null, gabaritoFile, null);
+
+        // FALHA — stub passa null como provaId (não "prova-123")
+        verify(questionParserService).parse(
+                any(), any(), any(), any(), any(), eq("prova-123"));
     }
 
     @Test

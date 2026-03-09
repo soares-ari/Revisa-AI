@@ -124,4 +124,18 @@ class IngestionControllerTest {
                         .param("banca", "CEBRASPE"))
                 .andExpect(status().isBadRequest());
     }
+
+    @Test
+    @WithMockUser
+    @DisplayName("POST /ingestion/jobs sem orgao retorna 400")
+    void post_semOrgao_retorna400() throws Exception {
+        mockMvc.perform(multipart("/ingestion/jobs")
+                        .file(new MockMultipartFile("provaArquivo", "prova.pdf",
+                                "application/pdf", PDF_BYTES))
+                        .file(new MockMultipartFile("gabaritoArquivo", "gabarito.pdf",
+                                "application/pdf", PDF_BYTES))
+                        .param("banca", "CEBRASPE")
+                        .param("cargo", "Analista"))
+                .andExpect(status().isBadRequest());
+    }
 }
