@@ -46,8 +46,13 @@ public class IngestionService {
                     "É necessário fornecer arquivo ou URL para o gabarito");
         }
 
+        var fileName = !isEmpty(provaArquivo) ? provaArquivo.getOriginalFilename() : provaUrl;
+        var prova = provaRepository.save(new Prova(bancaEnum, ano != null ? ano : 0, orgao, cargo, fileName));
+
         var job = repository.save(new IngestionJob(bancaEnum, ano, cargo));
-        log.debug("IngestionJob criado: {} — banca={}", job.getId(), bancaEnum);
+        job.setProvaId(prova.getId());
+        repository.save(job);
+        log.debug("IngestionJob criado: {} — banca={}, provaId={}", job.getId(), bancaEnum, prova.getId());
 
         try {
             var provaBytes = isEmpty(provaArquivo)
@@ -62,7 +67,7 @@ public class IngestionService {
             job.setTextGabarito(extractor.extract(gabaritoBytes));
 
             var result = questionParserService.parse(
-                    job.getTextProva(), job.getTextGabarito(), bancaEnum, ano, cargo, null);
+                    job.getTextProva(), job.getTextGabarito(), bancaEnum, ano, cargo, prova.getId());
             job.setQuestoesSalvas(result.questoesSalvas());
             job.setQuestoesInvalidas(result.questoesInvalidas());
 

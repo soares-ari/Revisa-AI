@@ -42,7 +42,13 @@ public class QuestionService {
     }
 
     public List<String> findAreas() {
-        return List.of();
+        var areas = mongoTemplate.findDistinct(
+                new Query(Criteria.where("valid").is(true)),
+                "area", Question.class, String.class);
+        return areas.stream()
+                .filter(a -> a != null && !a.isBlank())
+                .sorted()
+                .toList();
     }
 
     public Question findById(String id) {

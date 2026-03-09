@@ -41,6 +41,7 @@ class IngestionServiceTest {
     @BeforeEach
     void setUp() {
         service = new IngestionService(repository, provaRepository, downloader, extractor, questionParserService);
+        lenient().when(provaRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
         lenient().when(questionParserService.parse(any(), any(), any(), any(), any(), any()))
                 .thenReturn(new ParseResult(0, 0));
     }
@@ -196,7 +197,6 @@ class IngestionServiceTest {
         service.process("CEBRASPE", 2024, "PF", "Analista",
                 provaFile, null, gabaritoFile, null);
 
-        // FALHA — stub não chama provaRepository.save()
         verify(provaRepository).save(argThat(p ->
                 p.getBanca() == Banca.CEBRASPE
                 && p.getOrgao().equals("PF")
@@ -215,13 +215,19 @@ class IngestionServiceTest {
         given(repository.save(any())).willAnswer(inv -> inv.getArgument(0));
         given(extractor.extract(PDF_BYTES)).willReturn("texto");
         var prova = new Prova(Banca.CEBRASPE, 2024, "PF", "Analista", "prova.pdf");
+        try {
+            var idField = Prova.class.getDeclaredField("id");
+            idField.setAccessible(true);
+            idField.set(prova, "prova-abc");
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
         given(provaRepository.save(any())).willReturn(prova);
 
         var job = service.process("CEBRASPE", 2024, "PF", "Analista",
                 provaFile, null, gabaritoFile, null);
 
-        // FALHA — stub não seta provaId no job
-        assertThat(job.getProvaId()).isNotNull();
+        assertThat(job.getProvaId()).isEqualTo("prova-abc");
     }
 
     @Test
@@ -249,7 +255,6 @@ class IngestionServiceTest {
         service.process("CEBRASPE", 2024, "PF", "Analista",
                 provaFile, null, gabaritoFile, null);
 
-        // FALHA — stub passa null como provaId (não "prova-123")
         verify(questionParserService).parse(
                 any(), any(), any(), any(), any(), eq("prova-123"));
     }
