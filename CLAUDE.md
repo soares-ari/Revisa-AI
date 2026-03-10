@@ -525,6 +525,12 @@ Verifica novos PDFs nas fontes públicas e dispara pipeline de ingestão.
 - DashboardPage sem teste próprio — implementar junto à feature estudo
 - Área de conhecimento na StudyConfigPage: campo de busca com tags (não checkboxes), máx. 10 áreas
 
+### Decisões técnicas de teste
+- **Axios adapter `fetch` nos testes:** `src/test/setup.ts` define `axios.defaults.adapter = 'fetch'`
+  globalmente. O adapter XHR padrão do Axios 1.x não processa respostas do MSW v2 quando o body
+  do request é `FormData` com objetos `File` no jsdom — a Promise fica pendente indefinidamente.
+  O adapter `fetch` nativo resolve o problema sem alterar a instância `api` nem os interceptors.
+
 ---
 
 ## Ordem de Desenvolvimento Recomendada

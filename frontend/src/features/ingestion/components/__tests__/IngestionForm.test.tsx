@@ -43,7 +43,7 @@ describe('IngestionForm', () => {
     );
 
     const onJobCreated = vi.fn();
-    const user = userEvent.setup();
+    const user = userEvent.setup({ applyAccept: false });
     render(<IngestionForm onJobCreated={onJobCreated} />, { wrapper });
 
     await user.selectOptions(screen.getByLabelText(/banca/i), 'CEBRASPE');
@@ -78,7 +78,7 @@ describe('IngestionForm', () => {
   });
 
   it('arquivo não-PDF exibe erro de validação', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ applyAccept: false });
     render(<IngestionForm onJobCreated={vi.fn()} />, { wrapper });
 
     const txtFile = new File(['conteúdo'], 'documento.txt', {
