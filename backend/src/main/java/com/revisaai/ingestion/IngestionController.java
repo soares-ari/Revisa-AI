@@ -16,6 +16,13 @@ public class IngestionController {
         this.ingestionService = ingestionService;
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<IngestionJob> findById(@PathVariable String id) {
+        return ingestionService.findById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<IngestionJob> create(
             @RequestParam String banca,

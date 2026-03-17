@@ -16,8 +16,11 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.Optional;
+
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.given;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -123,6 +126,37 @@ class IngestionControllerTest {
                                 "application/pdf", PDF_BYTES))
                         .param("banca", "CEBRASPE"))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @WithMockUser
+    @DisplayName("GET /ingestion/jobs/:id retorna 200 com o job")
+    void get_jobExistente_retorna200() throws Exception {
+        var job = new IngestionJob();
+        job.setStatus(IngestionStatus.COMPLETED);
+
+        given(ingestionService.findById("job-1")).willReturn(Optional.of(job));
+
+        mockMvc.perform(get("/ingestion/jobs/job-1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("COMPLETED"));
+    }
+
+    @Test
+    @WithMockUser
+    @DisplayName("GET /ingestion/jobs/:id retorna 404 quando job não existe")
+    void get_jobInexistente_retorna404() throws Exception {
+        given(ingestionService.findById("nao-existe")).willReturn(Optional.empty());
+
+        mockMvc.perform(get("/ingestion/jobs/nao-existe"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("GET /ingestion/jobs/:id sem autenticação retorna 403")
+    void get_semAutenticacao_retorna403() throws Exception {
+        mockMvc.perform(get("/ingestion/jobs/job-1"))
+                .andExpect(status().isForbidden());
     }
 
     @Test
