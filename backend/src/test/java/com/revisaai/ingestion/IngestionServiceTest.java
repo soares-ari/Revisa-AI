@@ -43,7 +43,7 @@ class IngestionServiceTest {
         service = new IngestionService(repository, provaRepository, downloader, extractor, questionParserService);
         lenient().when(provaRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
         lenient().when(questionParserService.parse(any(), any(), any(), any(), any(), any()))
-                .thenReturn(new ParseResult(0, 0));
+                .thenReturn(new ParseResult(1, 0));
     }
 
     @Test

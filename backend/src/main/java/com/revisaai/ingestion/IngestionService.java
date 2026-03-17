@@ -6,6 +6,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.Optional;
+
 @Service
 public class IngestionService {
 
@@ -71,9 +73,15 @@ public class IngestionService {
             job.setQuestoesSalvas(result.questoesSalvas());
             job.setQuestoesInvalidas(result.questoesInvalidas());
 
-            job.setStatus(IngestionStatus.COMPLETED);
-            log.info("IngestionJob {} concluído com sucesso — questoesSalvas={}, questoesInvalidas={}",
-                    job.getId(), result.questoesSalvas(), result.questoesInvalidas());
+            if (result.partialErrorMessage() != null) {
+                job.setErrorMessage(result.partialErrorMessage());
+            }
+
+            boolean algumaSalva = result.questoesSalvas() + result.questoesInvalidas() > 0;
+            job.setStatus(algumaSalva ? IngestionStatus.COMPLETED : IngestionStatus.FAILED);
+            log.info("IngestionJob {} concluído — questoesSalvas={}, questoesInvalidas={}, parcial={}",
+                    job.getId(), result.questoesSalvas(), result.questoesInvalidas(),
+                    result.partialErrorMessage() != null);
 
         } catch (Exception e) {
             log.error("Falha ao processar IngestionJob {}: {}", job.getId(), e.getMessage(), e);
@@ -82,6 +90,10 @@ public class IngestionService {
         }
 
         return repository.save(job);
+    }
+
+    public Optional<IngestionJob> findById(String id) {
+        return repository.findById(id);
     }
 
     private boolean isEmpty(MultipartFile file) {
