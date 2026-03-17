@@ -18,6 +18,8 @@ import java.util.stream.Collectors;
 @Service
 public class QuestionParserService {
 
+    static final int BATCH_SIZE = 20;
+
     private final AnthropicClient anthropicClient;
     private final QuestionRepository questionRepository;
     private final ObjectMapper objectMapper;
@@ -32,51 +34,23 @@ public class QuestionParserService {
 
     public ParseResult parse(String textProva, String textGabarito,
                               Banca banca, Integer ano, String cargo, String provaId) {
-        var prompt = """
-                Você receberá o texto extraído de uma prova de concurso público e de seu gabarito.
-                Extraia todas as questões e combine com as respostas do gabarito.
-                Responda EXCLUSIVAMENTE com um array JSON, sem preâmbulo, explicação ou markdown.
-                Cada elemento deve ter: enunciado (string), alternativas (array de strings com o texto
-                de cada alternativa), gabarito (alternativa correta exatamente como aparece em alternativas),
-                area (string com área de conhecimento), dificuldade (uma de: FACIL, MEDIO, DIFICIL).
+        throw new UnsupportedOperationException("not implemented");
+    }
 
-                TEXTO DA PROVA:
-                %s
+    int callClaudeCount(String textProva) {
+        throw new UnsupportedOperationException("not implemented");
+    }
 
-                GABARITO:
-                %s
-                """.formatted(textProva, textGabarito);
+    String callClaudeRange(String textProva, String textGabarito, int inicio, int fim) {
+        throw new UnsupportedOperationException("not implemented");
+    }
 
-        var json = callClaude(prompt);
-
-        List<QuestionJson> items;
+    private Dificuldade parseDificuldadeOrNull(String value) {
         try {
-            items = objectMapper.readValue(json, new TypeReference<>() {});
-        } catch (Exception e) {
-            throw new RuntimeException("Falha ao parsear resposta da Anthropic: " + e.getMessage(), e);
+            return Dificuldade.valueOf(value);
+        } catch (IllegalArgumentException e) {
+            return null;
         }
-
-        int questoesSalvas = 0;
-        int questoesInvalidas = 0;
-
-        for (var item : items) {
-            Question question;
-            try {
-                var dificuldade = Dificuldade.valueOf(item.dificuldade());
-                question = new Question(item.enunciado(), item.alternativas(),
-                        item.gabarito(), banca, ano, cargo, item.area(), dificuldade, provaId);
-                questoesSalvas++;
-            } catch (IllegalArgumentException e) {
-                var dificuldade = parseDificuldadeOrNull(item.dificuldade());
-                question = Question.createInvalid(item.enunciado(), item.alternativas(),
-                        item.gabarito(), banca, ano, cargo, item.area(), dificuldade,
-                        e.getMessage(), provaId);
-                questoesInvalidas++;
-            }
-            questionRepository.save(question);
-        }
-
-        return new ParseResult(questoesSalvas, questoesInvalidas);
     }
 
     String callClaude(String prompt) {
@@ -96,15 +70,7 @@ public class QuestionParserService {
         return rawJson.replaceAll("(?s)```json\\s*|```\\s*", "").trim();
     }
 
-    private Dificuldade parseDificuldadeOrNull(String value) {
-        try {
-            return Dificuldade.valueOf(value);
-        } catch (IllegalArgumentException e) {
-            return null;
-        }
-    }
-
     @JsonIgnoreProperties(ignoreUnknown = true)
-    private record QuestionJson(String enunciado, List<String> alternativas,
-                                 String gabarito, String area, String dificuldade) {}
+    record QuestionJson(int numero, String enunciado, List<String> alternativas,
+                        String gabarito, String area, String dificuldade) {}
 }
