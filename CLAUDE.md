@@ -113,11 +113,18 @@ dois documentos — prova e gabarito — cada um como arquivo PDF via multipart 
 pública. Faz download via WebClient quando necessário, extrai texto bruto com Apache
 PDFBox 3.x e persiste `IngestionJob` com `status=COMPLETED` (ou `FAILED` se houver erro).
 
-**Etapa 2 (implementada):** Após a extração de texto, o `IngestionService` chama a API
-da Anthropic (Claude Haiku 4.5, modelo `claude-haiku-4-5-20251001`) com uma única
-requisição síncrona enviando `textProva` e `textGabarito`. Claude retorna um array JSON
-de questões; o `QuestionParserService` parseia e persiste cada questão. Pipeline
-síncrono — ocorre na mesma requisição do upload, sem @Async nesta fase.
+**Etapa 2 (implementada):** Após a extração de texto, o `QuestionParserService` executa
+um pipeline de 3 fases com chamadas sequenciais ao Claude Haiku 4.5:
+1. **Contagem** — `callClaudeCount(textProva)` retorna o número total de questões (int).
+2. **Extração por range** — loop de `callClaudeRange(textProva, textGabarito, inicio, fim)`
+   em batches de `BATCH_SIZE=20` questões por chamada. Cada batch solicita apenas o
+   intervalo especificado; o `textGabarito` completo é reenviado em cada chamada.
+3. **Retry de cobertura** — após todos os batches, verifica quais números de 1..N não foram
+   cobertos e reprocessa apenas esses intervalos uma única vez.
+
+O job termina `COMPLETED` se ≥1 questão foi salva/inválida. Só marca `FAILED` se nenhuma
+questão foi processada. Falhas parciais são registradas em `errorMessage` do job sem
+abortar o pipeline. Idempotência: `existsByProvaIdAndEnunciado` evita duplicatas em retry.
 
 **Validação de questões:** gabarito fora das alternativas ou dificuldade desconhecida →
 persistidas com `valid=false` e `validationError` descritivo. O job ainda termina
@@ -146,7 +153,8 @@ COMPLETED; `questoesInvalidas` reflete o total no body da resposta.
 
 **Componentes:**
 - `ProvaRepository` — extends MongoRepository<Prova, String>
-- `QuestionParserService` — @Service; chama Anthropic, parseia JSON, salva Questions com provaId
+- `QuestionParserService` — @Service; 3 métodos package-private testáveis via spy:
+  `callClaudeCount`, `callClaudeRange`, `parse`. Constante `BATCH_SIZE=20`.
 - `AnthropicConfig` — @Configuration; @Bean `AnthropicClient` com timeout de 120s
 
 **Requisição `POST /ingestion/jobs` (multipart/form-data):**
@@ -524,6 +532,23 @@ Verifica novos PDFs nas fontes públicas e dispara pipeline de ingestão.
 ### Dívida técnica
 - DashboardPage sem teste próprio — implementar junto à feature estudo
 - Área de conhecimento na StudyConfigPage: campo de busca com tags (não checkboxes), máx. 10 áreas
+- `DELETE /ingestion/jobs/:id` não implementado — até lá, usar o procedure abaixo para limpar
+  jobs falhos manualmente via MongoDB antes de reprocessar uma prova
+
+### Procedure — limpeza de jobs falhos no MongoDB
+Necessário quando um job ficou com `status=FAILED` e se deseja reprocessar a prova.
+Executar via mongo-express (localhost:8081) ou mongosh:
+```javascript
+// Listar jobs FAILED
+db.ingestion_jobs.find({ status: "FAILED" }).toArray()
+
+// Remover job específico e seus dados órfãos
+const jobId = "<id-do-job>"
+const job = db.ingestion_jobs.findOne({ _id: ObjectId(jobId) })
+db.questions.deleteMany({ provaId: job.provaId })
+db.provas.deleteOne({ _id: ObjectId(job.provaId) })
+db.ingestion_jobs.deleteOne({ _id: ObjectId(jobId) })
+```
 
 ### Decisões técnicas de teste
 - **Axios adapter `fetch` nos testes:** `src/test/setup.ts` define `axios.defaults.adapter = 'fetch'`
