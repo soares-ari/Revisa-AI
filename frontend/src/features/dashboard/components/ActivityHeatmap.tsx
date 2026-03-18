@@ -4,6 +4,7 @@ import type { SessionSummary } from '../types';
 function buildGrid(sessions: SessionSummary[]) {
   const sessionsByDay: Record<string, number> = {};
   sessions.forEach((s) => {
+    if (!s.createdAt) return;
     const day = s.createdAt.slice(0, 10);
     sessionsByDay[day] = (sessionsByDay[day] ?? 0) + 1;
   });
