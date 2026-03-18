@@ -526,12 +526,12 @@ Verifica novos PDFs nas fontes públicas e dispara pipeline de ingestão.
 ### Frontend — em andamento
 - [x] Feature auth (landing, login, cadastro)
 - [x] Feature dashboard
-- [~] Feature ingestão (tela de upload) — em andamento
-- [ ] Feature estudo
+- [x] Feature ingestão (tela de upload) — validada com prova real (68/70 questões)
+- [~] Feature estudo (StudyConfigPage, StudyPage, StudyResultPage) — em andamento
 
 ### Dívida técnica
-- DashboardPage sem teste próprio — implementar junto à feature estudo
-- Área de conhecimento na StudyConfigPage: campo de busca com tags (não checkboxes), máx. 10 áreas
+- DashboardPage sem teste próprio — implementar após feature estudo
+- ReviewList exibe apenas área das questões erradas (sem enunciado) — evolução natural: modal com `GET /questions/:id`
 - `DELETE /ingestion/jobs/:id` não implementado — até lá, usar o procedure abaixo para limpar
   jobs falhos manualmente via MongoDB antes de reprocessar uma prova
 
